@@ -37,18 +37,35 @@
     #toast{max-width:calc(100% - 24px);white-space:normal;text-align:center;background:#ffffff!important;color:#172033!important;border:1px solid #dce7f7!important}
     @media(min-width:700px){.app{max-width:760px}.stats{grid-template-columns:repeat(4,1fr)}.row{display:grid!important;grid-template-columns:1.25fr .7fr .65fr auto!important;align-items:center!important}.row>*{width:auto}.row>div:last-child{display:flex!important;width:auto!important}.toolbar{grid-template-columns:1.2fr .7fr .7fr auto!important}.toolbar input:first-child{grid-column:auto!important}.filtergrid{grid-template-columns:1fr 1fr 1fr 1fr!important}.filtergrid .span2{grid-column:span 2!important}.formgrid{grid-template-columns:1fr 1fr!important}.tabs{max-width:520px;height:auto}.tab{flex-direction:row;font-size:11px}.tab span{font-size:11px}.sub{max-width:none}}
 
+    /* === V5 LOGIN CENTER + BIOMETRIC === */
+    body.login-mode .app{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:18px 10px!important}
+    body.login-mode .login{margin:0 auto!important;width:100%;max-width:370px}
+    .login-hero{text-align:center;margin:6px 0 15px}
+    .login-hero .logo{margin:0 auto 8px;width:52px;height:52px;border-radius:18px;font-size:18px}
+    .bio-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .bio-note{font-size:10.5px;color:var(--muted);line-height:1.45;text-align:center;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px}
+    @media(max-width:420px){.bio-row{grid-template-columns:1fr}.login-hero .logo{width:48px;height:48px}.login{border-radius:18px}}
+
   </style>
 </head>
-<body>
+<body class="login-mode">
 <div id="toast"></div>
 <div class="app">
   <section id="loginPage" class="login card pad">
-    <div class="brand" style="justify-content:center;margin:10px 0 18px"><div class="logo"><i class="fa-solid fa-database"></i></div><div><h1>Admin Data</h1><div class="sub">Rocky Hijab Firebase Editor</div></div></div>
+    <div class="login-hero">
+      <div class="logo"><i class="fa-solid fa-database"></i></div>
+      <h1>Admin Data</h1>
+      <div class="sub" style="white-space:normal;max-width:none">Rocky Hijab Firebase Editor</div>
+    </div>
     <div class="grid">
       <input id="loginUser" placeholder="Username admin" autocomplete="username">
       <input id="loginPin" placeholder="PIN" type="password" autocomplete="current-password">
       <button class="btn" onclick="login()"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
-      <div class="small">Khusus akun role <b>admin</b>. Data tetap memakai Firebase project yang sama.</div>
+      <div class="bio-row">
+        <button class="btn ghost" onclick="biometricLogin()"><i class="fa-solid fa-fingerprint"></i> Fingerprint</button>
+        <button class="btn ghost" onclick="setupBiometric()"><i class="fa-solid fa-shield-halved"></i> Aktifkan</button>
+      </div>
+      <div class="bio-note">Fingerprint aktif setelah login PIN sekali di HP ini. Tetap khusus akun role <b>admin</b>.</div>
     </div>
   </section>
 
@@ -80,7 +97,7 @@ import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, getDo
 
 const firebaseConfig = { apiKey:'AIzaSyAqmTEKnLKOXcmOoR9RrXksNe5_Fix42w8', authDomain:'rocky-fd14b.firebaseapp.com', projectId:'rocky-fd14b', storageBucket:'rocky-fd14b.firebasestorage.app', messagingSenderId:'861954349314', appId:'1:861954349314:web:bb8384825daedb8d34ca1b' };
 const app = initializeApp(firebaseConfig), db = getFirestore(app);
-const ADMIN_NAMES = ['admin']; const SESSION='rocky_admin_data_session_v1';
+const ADMIN_NAMES = ['admin']; const SESSION='rocky_admin_data_session_v1'; const BIO_PREFIX='rocky_admin_bio_v1_';
 let me=null, page='transactions', tx=[], att=[], users=[], unsub=[];
 let txSelected=new Set(), txMode='daily', txLimit=180;
 const $=id=>document.getElementById(id); const clean=s=>String(s||'').trim().toLowerCase();
@@ -94,10 +111,18 @@ function timeKey(o){ const m=ms(o); return m?new Date(m).toLocaleTimeString('en-
 function wibDateTimeMs(d,t){ const date=d||today(), time=t||'08:00'; return new Date(`${date}T${time}:00+07:00`).getTime(); }
 function isAdminUser(u){return u && (u.role==='admin'||ADMIN_NAMES.includes(clean(u.username)))}
 function safe(s){return String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
-window.login=async()=>{try{const username=clean($('loginUser').value), pin=String($('loginPin').value||'').trim(); if(!username||!pin) return toast('Lengkapi login',true); const snap=await getDoc(doc(db,'users',username)); if(!snap.exists()) throw Error('User tidak ditemukan'); const u={id:snap.id,...snap.data(),username}; if(String(u.pin)!==pin) throw Error('PIN salah'); if(!isAdminUser(u)) throw Error('Akun ini bukan admin'); me=u; localStorage.setItem(SESSION,JSON.stringify(u)); start(); toast('Login admin berhasil');}catch(e){toast(e.message,true)}};
+function bioKey(username){return BIO_PREFIX+clean(username)}
+function randBytes(len=32){const b=new Uint8Array(len); crypto.getRandomValues(b); return b}
+function b64url(buf){return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function fromB64url(str){str=String(str||'').replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4)str+='='; return Uint8Array.from(atob(str),c=>c.charCodeAt(0)).buffer}
+function bioSupported(){return !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext)}
+async function adminByUsername(username){const snap=await getDoc(doc(db,'users',clean(username))); if(!snap.exists()) throw Error('User tidak ditemukan'); const u={id:snap.id,...snap.data(),username:clean(username)}; if(!isAdminUser(u)) throw Error('Akun ini bukan admin'); return u}
+window.login=async()=>{try{const username=clean($('loginUser').value), pin=String($('loginPin').value||'').trim(); if(!username||!pin) return toast('Lengkapi login',true); const u=await adminByUsername(username); if(String(u.pin)!==pin) throw Error('PIN salah'); me=u; localStorage.setItem(SESSION,JSON.stringify(u)); start(); toast('Login admin berhasil');}catch(e){toast(e.message,true)}};
+window.setupBiometric=async()=>{try{const username=clean($('loginUser').value), pin=String($('loginPin').value||'').trim(); if(!bioSupported()) throw Error('Fingerprint butuh HTTPS/Chrome yang mendukung'); if(!username||!pin) throw Error('Isi username dan PIN dulu'); const u=await adminByUsername(username); if(String(u.pin)!==pin) throw Error('PIN salah'); const cred=await navigator.credentials.create({publicKey:{challenge:randBytes(),rp:{name:'Rocky Hijab Admin'},user:{id:randBytes(16),name:username,displayName:u.name||username},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{userVerification:'required',residentKey:'preferred'},timeout:60000,attestation:'none'}}); if(!cred) throw Error('Fingerprint dibatalkan'); localStorage.setItem(bioKey(username),JSON.stringify({id:b64url(cred.rawId),username,name:u.name||username,createdAt:Date.now()})); me=u; localStorage.setItem(SESSION,JSON.stringify(u)); start(); toast('Fingerprint aktif di perangkat ini');}catch(e){toast(e.message||'Fingerprint gagal',true)}};
+window.biometricLogin=async()=>{try{const username=clean($('loginUser').value); if(!bioSupported()) throw Error('Fingerprint butuh HTTPS/Chrome yang mendukung'); if(!username) throw Error('Isi username dulu'); const saved=JSON.parse(localStorage.getItem(bioKey(username))||'null'); if(!saved?.id) throw Error('Fingerprint belum diaktifkan untuk user ini'); await navigator.credentials.get({publicKey:{challenge:randBytes(),allowCredentials:[{type:'public-key',id:fromB64url(saved.id)}],userVerification:'required',timeout:60000}}); const u=await adminByUsername(username); me=u; localStorage.setItem(SESSION,JSON.stringify(u)); start(); toast('Login fingerprint berhasil');}catch(e){toast(e.message||'Fingerprint gagal',true)}};
 function restore(){try{const u=JSON.parse(localStorage.getItem(SESSION)||'null'); if(u&&isAdminUser(u)){me=u;start()}}catch(e){}}
-window.logout=()=>{localStorage.removeItem(SESSION);unsub.forEach(f=>f&&f());unsub=[];me=null;$('loginPage').classList.remove('hide');$('mainPage').classList.add('hide');$('tabs').classList.add('hide')};
-function start(){ $('loginPage').classList.add('hide');$('mainPage').classList.remove('hide');$('tabs').classList.remove('hide');$('whoami').textContent=`${me.name||me.username} · ${me.username}`; bind(); render(); }
+window.logout=()=>{localStorage.removeItem(SESSION);unsub.forEach(f=>f&&f());unsub=[];me=null;document.body.classList.add('login-mode');$('loginPage').classList.remove('hide');$('mainPage').classList.add('hide');$('tabs').classList.add('hide')};
+function start(){ document.body.classList.remove('login-mode');$('loginPage').classList.add('hide');$('mainPage').classList.remove('hide');$('tabs').classList.remove('hide');$('whoami').textContent=`${me.name||me.username} · ${me.username}`; bind(); render(); }
 function bind(){unsub.forEach(f=>f&&f());unsub=[];unsub.push(onSnapshot(query(collection(db,'transactions'),limit(1200)),s=>{tx=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>ms(b)-ms(a));stats();render()}));unsub.push(onSnapshot(query(collection(db,'attendance'),limit(1200)),s=>{att=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>ms(b)-ms(a));stats();render()}));unsub.push(onSnapshot(query(collection(db,'users'),orderBy('name')),s=>{users=s.docs.map(d=>({id:d.id,...d.data()}));stats();render()}));}
 function stats(){const live=tx.filter(t=>t.deleted!==true);$('stToday').textContent='Rp '+rp(live.filter(t=>dateKey(t)===today()).reduce((a,b)=>a+Number(b.amount||0),0));$('stMonth').textContent='Rp '+rp(live.filter(t=>String(t.monthKey||dateKey(t)).slice(0,7)===month()).reduce((a,b)=>a+Number(b.amount||0),0));$('stTx').textContent=String(live.length);$('stUsers').textContent=String(users.filter(u=>u.active!==false).length)}
 window.go=p=>{page=p;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['transactions','attendance','users','backup'][i]===p));render()};
