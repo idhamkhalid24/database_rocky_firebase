@@ -179,9 +179,21 @@ function renderUsers(){
   const totalBonus=ranked.reduce((a,x)=>a+x.b.bonus,0);
   const top3=ranked.slice(0,3);
   const rankingHtml=top3.length?top3.map((x,i)=>`<div class="rank-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:16px;background:${i===0?'#fff8e6':'#f8fafc'}"><div style="display:flex;align-items:center;gap:10px;min-width:0"><div style="width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:950;background:${i===0?'#ffd166':'#e0f2fe'};color:#102033">#${i+1}</div><div style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safe(x.u.name||x.u.username)}</b><div class="small">Omzet Rp ${rp(x.b.omzet)}</div></div></div><div class="money" style="font-size:17px;color:var(--green);white-space:nowrap">Rp ${rp(x.b.bonus)}</div></div>`).join(''):'<div class="small">Belum ada ranking bonus.</div>';
-  const usersHtml=ranked.concat(users.filter(u=>u.active===false).map(u=>({u,b:userBonusData(u)}))).map(({u,b},idx)=>`<div class="row" style="grid-template-columns:1fr auto;align-items:center;gap:10px">
-    <div style="min-width:0"><b>${safe(u.name||u.username)}</b><div class="small">@${safe(u.username)} · ${safe(u.role||'staff')} ${u.active===false?'· Nonaktif':''}</div><div class="small" style="margin-top:4px">Omzet bulan ini: Rp ${rp(b.omzet)} · ${b.count} trx</div></div>
-    <div style="text-align:right;min-width:112px"><div class="money" style="font-size:18px;color:var(--green)">Rp ${rp(b.bonus)}</div><button class="btn ghost" style="padding:7px 10px;margin-top:7px;font-size:12px" onclick="openUser('${safe(u.username)}')">Edit</button></div>
+  const usersHtml=ranked.concat(users.filter(u=>u.active===false).map(u=>({u,b:userBonusData(u)}))).map(({u,b},idx)=>`<div class="row" style="display:flex;flex-direction:column;gap:0;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0">
+      <div style="min-width:0;flex:1">
+        <b style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safe(u.name||u.username)}</b>
+        <div class="small" style="margin-top:2px">@${safe(u.username)} · ${safe(u.role||'staff')} ${u.active===false?'· <span style="color:var(--red)">Nonaktif</span>':''}</div>
+      </div>
+      <div style="text-align:right;flex:0 0 auto">
+        <div class="money" style="font-size:17px;color:var(--green);white-space:nowrap">Rp ${rp(b.bonus)}</div>
+        <div class="small" style="color:var(--muted);margin-top:1px">bonus bulan ini</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)">
+      <div class="small" style="color:var(--muted)">Omzet: <b style="color:var(--text)">Rp ${rp(b.omzet)}</b> · ${b.count} trx</div>
+      <button class="btn ghost" style="padding:6px 14px;font-size:12px;flex:0 0 auto" onclick="openUser('${safe(u.username)}')"><i class="fa-solid fa-pen"></i> Edit</button>
+    </div>
   </div>`).join('');
   $('view').innerHTML=`<div class="card pad"><div class="top"><div><div class="label">Kelola User & Bonus</div><h1>Ranking bonus bulan ini</h1><div class="small" style="margin-top:3px">Bonus default 1.5%. Nominal bonus tampil besar di kanan user.</div></div><button class="btn" onclick="openUser()"><i class="fa-solid fa-user-plus"></i> User</button></div><div class="grid stats" style="margin:8px 0"><div class="card stat"><span class="label">Omzet User</span><b>Rp ${rp(totalOmzet)}</b></div><div class="card stat"><span class="label">Total Bonus</span><b>Rp ${rp(totalBonus)}</b></div></div><div class="list" style="margin:10px 0 12px">${rankingHtml}</div><div id="userList" class="list">${usersHtml}</div></div>`;
 }
