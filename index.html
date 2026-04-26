@@ -122,7 +122,9 @@ import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, getDo
 const firebaseConfig = { apiKey:'AIzaSyAqmTEKnLKOXcmOoR9RrXksNe5_Fix42w8', authDomain:'rocky-fd14b.firebaseapp.com', projectId:'rocky-fd14b', storageBucket:'rocky-fd14b.firebasestorage.app', messagingSenderId:'861954349314', appId:'1:861954349314:web:bb8384825daedb8d34ca1b' };
 const app = initializeApp(firebaseConfig), db = getFirestore(app);
 const ADMIN_NAMES = ['admin']; const SESSION='rocky_admin_data_session_v1';
-let me=null, page='transactions', tx=[], att=[], users=[], unsub=[];
+let me=null, page='transactions', tx=[], att=[], users=[], closings=[], unsub=[];
+const DEFAULT_TRANSACTION_BONUS_RATE=0.015, DEFAULT_CLOSING_BONUS_PER_MINUTE=100;
+let cachedBonusSettings={transactionBonusRate:DEFAULT_TRANSACTION_BONUS_RATE,closingBonusPerMinute:DEFAULT_CLOSING_BONUS_PER_MINUTE};
 let txSelected=new Set(), txMode='daily', txLimit=180;
 const $=id=>document.getElementById(id); const clean=s=>String(s||'').trim().toLowerCase();
 const rp=n=>new Intl.NumberFormat('id-ID').format(Number(n||0));
@@ -143,12 +145,44 @@ window.addEventListener('DOMContentLoaded',()=>{['loginUser','loginPin'].forEach
 function restore(){try{const u=JSON.parse(localStorage.getItem(SESSION)||'null'); if(u&&isAdminUser(u)){me=u;start()}}catch(e){}}
 window.logout=()=>{localStorage.removeItem(SESSION);unsub.forEach(f=>f&&f());unsub=[];me=null;document.body.classList.add('login-mode');$('loginPage').classList.remove('hide');$('mainPage').classList.add('hide');$('tabs').classList.add('hide');$('fabTx')?.classList.add('hide')};
 function start(){ document.body.classList.remove('login-mode');$('loginPage').classList.add('hide');$('mainPage').classList.remove('hide');$('tabs').classList.remove('hide');$('fabTx')?.classList.remove('hide');$('whoami').textContent=`${me.name||me.username} · ${me.username}`; bind(); render(); }
-function bind(){unsub.forEach(f=>f&&f());unsub=[];unsub.push(onSnapshot(query(collection(db,'transactions'),limit(1200)),s=>{tx=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>ms(b)-ms(a));stats();render()}));unsub.push(onSnapshot(query(collection(db,'attendance'),limit(1200)),s=>{att=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>ms(b)-ms(a));stats();render()}));unsub.push(onSnapshot(query(collection(db,'users'),orderBy('name')),s=>{users=s.docs.map(d=>({id:d.id,...d.data()}));stats();render()}));}
-function getBonusPercent(u){return Number(u?.bonusPercent ?? u?.bonus ?? 1.5) || 0}
+function bind(){unsub.forEach(f=>f&&f());unsub=[];
+  unsub.push(onSnapshot(query(collection(db,'transactions'),limit(1200)),s=>{tx=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>ms(b)-ms(a));stats();render()}));
+  unsub.push(onSnapshot(query(collection(db,'attendance'),limit(1200)),s=>{att=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>ms(b)-ms(a));stats();render()}));
+  unsub.push(onSnapshot(query(collection(db,'users'),orderBy('name')),s=>{users=s.docs.map(d=>({id:d.id,...d.data()}));stats();render()}));
+  unsub.push(onSnapshot(query(collection(db,'closings'),limit(400)),s=>{
+    closings=s.docs.map(d=>({id:d.id,...d.data()}))
+      .filter(c=>c.id!=='__bonus_settings'&&c.dateKey!=='__bonus_settings'&&c.type!=='bonus_settings')
+      .sort((a,b)=>ms(b)-ms(a));
+    stats();render();
+  }));
+  unsub.push(onSnapshot(doc(db,'closings','__bonus_settings'),snap=>{
+    if(snap.exists()){
+      const d=snap.data()||{};
+      cachedBonusSettings={
+        transactionBonusRate:Number.isFinite(Number(d.transactionBonusRate))?Number(d.transactionBonusRate):DEFAULT_TRANSACTION_BONUS_RATE,
+        closingBonusPerMinute:Number.isFinite(Number(d.closingBonusPerMinute))?Number(d.closingBonusPerMinute):DEFAULT_CLOSING_BONUS_PER_MINUTE,
+        updatedAtMs:Number(d.updatedAtMs||0),updatedBy:d.updatedBy||'',updatedByName:d.updatedByName||''
+      };
+    }else cachedBonusSettings={transactionBonusRate:DEFAULT_TRANSACTION_BONUS_RATE,closingBonusPerMinute:DEFAULT_CLOSING_BONUS_PER_MINUTE};
+    stats();render();
+  }));
+}
+function getTransactionBonusRate(){const rate=Number(cachedBonusSettings?.transactionBonusRate);return Number.isFinite(rate)&&rate>=0?rate:DEFAULT_TRANSACTION_BONUS_RATE}
+function getTransactionBonusPercent(){return Number((getTransactionBonusRate()*100).toFixed(3))}
+function getClosingBonusPerMinute(){const amount=Number(cachedBonusSettings?.closingBonusPerMinute);return Number.isFinite(amount)&&amount>=0?amount:DEFAULT_CLOSING_BONUS_PER_MINUTE}
+function calculateBonus(omzet){return Math.round(Number(omzet||0)*getTransactionBonusRate())}
 function monthTxForUser(username, m=month()){const key=clean(username);return tx.filter(t=>t.deleted!==true && clean(t.user)===key && String(t.monthKey||dateKey(t)).slice(0,7)===m)}
-function userBonusData(u, m=month()){const items=monthTxForUser(u.username,m);const omzet=items.reduce((a,b)=>a+Number(b.amount||0),0);const percent=getBonusPercent(u);return{omzet,percent,bonus:Math.round(omzet*percent/100),count:items.length}}
-function totalBonusMonth(m=month()){return users.reduce((sum,u)=>sum+userBonusData(u,m).bonus,0)}
-function stats(){const live=tx.filter(t=>t.deleted!==true);$('stToday').textContent='Rp '+rp(live.filter(t=>dateKey(t)===today()).reduce((a,b)=>a+Number(b.amount||0),0));$('stMonth').textContent='Rp '+rp(live.filter(t=>String(t.monthKey||dateKey(t)).slice(0,7)===month()).reduce((a,b)=>a+Number(b.amount||0),0));if($('stBonus'))$('stBonus').textContent='Rp '+rp(totalBonusMonth(month()));$('stTx').textContent=String(live.length);$('stUsers').textContent=String(users.filter(u=>u.active!==false).length)}
+function monthTx(m=month()){return tx.filter(t=>t.deleted!==true && String(t.monthKey||dateKey(t)).slice(0,7)===m)}
+function activeStaffUsers(){return users.filter(u=>u.active!==false && !isAdminUser(u))}
+function monthlyClosingRecords(m=month()){return closings.filter(c=>c.closed===true && String(c.monthKey||c.dateKey||'').slice(0,7)===m)}
+function getClosingBonusPerUserDynamic(c){if(!c||c.closed!==true)return 0;const delay=Number(c.delayMinutes||0);if(!Number.isFinite(delay)||delay<=0)return 0;return Math.round(delay*getClosingBonusPerMinute())}
+function getClosingTotalUsers(c){if(!c)return 0;const stored=Number(c.totalUsers||0);if(Number.isFinite(stored)&&stored>0)return stored;const byUser=c.bonusByUser||{};const count=Object.keys(byUser).filter(k=>clean(k)&&clean(k)!=='admin').length;if(count>0)return count;return activeStaffUsers().length}
+function getClosingBonusValue(c,username=null){if(!c||c.closed!==true)return 0;const perUser=getClosingBonusPerUserDynamic(c);if(username&&username!=='all')return perUser;return perUser*getClosingTotalUsers(c)}
+function getMonthlyClosingBonus(username=null,m=month()){return monthlyClosingRecords(m).reduce((sum,c)=>sum+getClosingBonusValue(c,username),0)}
+function getBonusBreakdown(items, username=null, m=month()){const omzet=items.filter(t=>String(t.monthKey||dateKey(t)).slice(0,7)===m).reduce((a,b)=>a+Number(b.amount||0),0);const trxBonus=calculateBonus(omzet);const closingBonus=getMonthlyClosingBonus(username,m);return{omzet,trxBonus,closingBonus,totalBonus:trxBonus+closingBonus,count:items.filter(t=>String(t.monthKey||dateKey(t)).slice(0,7)===m).length,percent:getTransactionBonusPercent()}}
+function userBonusData(u, m=month()){const items=monthTxForUser(u.username,m);return getBonusBreakdown(items,clean(u.username),m)}
+function totalBonusMonth(m=month()){return getBonusBreakdown(monthTx(m),null,m).totalBonus}
+function stats(){const live=tx.filter(t=>t.deleted!==true);$('stToday').textContent='Rp '+rp(live.filter(t=>dateKey(t)===today()).reduce((a,b)=>a+Number(b.amount||0),0));$('stMonth').textContent='Rp '+rp(live.filter(t=>String(t.monthKey||dateKey(t)).slice(0,7)===month()).reduce((a,b)=>a+Number(b.amount||0),0));if($('stBonus'))$('stBonus').textContent='Rp '+rp(getBonusBreakdown(live,null,month()).totalBonus);$('stTx').textContent=String(live.length);$('stUsers').textContent=String(users.filter(u=>u.active!==false).length)}
 window.go=p=>{page=p;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['transactions','attendance','users','backup'][i]===p));render()};
 function render(){ if(!me) return; if(page==='transactions') return renderTx(); if(page==='attendance') return renderAtt(); if(page==='users') return renderUsers(); renderBackup(); }
 function userOptions(){return '<option value="all">Semua User</option>'+users.map(u=>`<option value="${safe(u.username)}">${safe(u.name||u.username)}</option>`).join('')}
@@ -174,37 +208,37 @@ window.saveAtt=async(id='')=>{try{const username=clean($('aUser').value);const u
 window.delAtt=async(id)=>{if(!confirm('Hapus data absen ini?'))return;await deleteDoc(doc(db,'attendance',id));toast('Absen dihapus')};
 function renderUsers(){
   const active=users.filter(u=>u.active!==false);
-  const ranked=[...active].map(u=>({u,b:userBonusData(u)})).sort((a,b)=>b.b.bonus-a.b.bonus || b.b.omzet-a.b.omzet);
-  const totalOmzet=ranked.reduce((a,x)=>a+x.b.omzet,0);
-  const totalBonus=ranked.reduce((a,x)=>a+x.b.bonus,0);
+  const ranked=[...active].map(u=>({u,b:userBonusData(u)})).sort((a,b)=>b.b.totalBonus-a.b.totalBonus || b.b.omzet-a.b.omzet);
+  const globalBonus=getBonusBreakdown(monthTx(month()),null,month());
+  const totalOmzet=globalBonus.omzet;
   const top3=ranked.slice(0,3);
-  const rankingHtml=top3.length?top3.map((x,i)=>`<div class="rank-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:16px;background:${i===0?'#fff8e6':'#f8fafc'}"><div style="display:flex;align-items:center;gap:10px;min-width:0"><div style="width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:950;background:${i===0?'#ffd166':'#e0f2fe'};color:#102033">#${i+1}</div><div style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safe(x.u.name||x.u.username)}</b><div class="small">Omzet Rp ${rp(x.b.omzet)}</div></div></div><div class="money" style="font-size:17px;color:var(--green);white-space:nowrap">Rp ${rp(x.b.bonus)}</div></div>`).join(''):'<div class="small">Belum ada ranking bonus.</div>';
-  const usersHtml=ranked.concat(users.filter(u=>u.active===false).map(u=>({u,b:userBonusData(u)}))).map(({u,b},idx)=>`<div class="row" style="display:flex;flex-direction:column;gap:0;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff">
+  const settingInfo=`Bonus transaksi ${getTransactionBonusPercent()}% · closing Rp ${rp(getClosingBonusPerMinute())}/menit`;
+  const rankingHtml=top3.length?top3.map((x,i)=>`<div class="rank-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:16px;background:${i===0?'#fff8e6':'#f8fafc'}"><div style="display:flex;align-items:center;gap:10px;min-width:0"><div style="width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:950;background:${i===0?'#ffd166':'#e0f2fe'};color:#102033">#${i+1}</div><div style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safe(x.u.name||x.u.username)}</b><div class="small">Omzet Rp ${rp(x.b.omzet)} · closing Rp ${rp(x.b.closingBonus)}</div></div></div><div class="money" style="font-size:17px;color:var(--green);white-space:nowrap">Rp ${rp(x.b.totalBonus)}</div></div>`).join(''):'<div class="small">Belum ada ranking bonus.</div>';
+  const usersHtml=ranked.concat(users.filter(u=>u.active===false).map(u=>({u,b:userBonusData(u)}))).map(({u,b})=>`<div class="row" style="display:flex;flex-direction:column;gap:0;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0">
       <div style="min-width:0;flex:1">
         <b style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safe(u.name||u.username)}</b>
         <div class="small" style="margin-top:2px">@${safe(u.username)} · ${safe(u.role||'staff')} ${u.active===false?'· <span style="color:var(--red)">Nonaktif</span>':''}</div>
       </div>
       <div style="text-align:right;flex:0 0 auto">
-        <div class="money" style="font-size:17px;color:var(--green);white-space:nowrap">Rp ${rp(b.bonus)}</div>
+        <div class="money" style="font-size:17px;color:var(--green);white-space:nowrap">Rp ${rp(b.totalBonus)}</div>
         <div class="small" style="color:var(--muted);margin-top:1px">bonus bulan ini</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)">
-      <div class="small" style="color:var(--muted)">Omzet: <b style="color:var(--text)">Rp ${rp(b.omzet)}</b> · ${b.count} trx</div>
-      <button class="btn ghost" style="padding:6px 14px;font-size:12px;flex:0 0 auto" onclick="openUser('${safe(u.username)}')"><i class="fa-solid fa-pen"></i> Edit</button>
+      <div class="small" style="color:var(--muted)">Omzet: <b style="color:var(--text)">Rp ${rp(b.omzet)}</b> · bonus trx Rp ${rp(b.trxBonus)} · closing Rp ${rp(b.closingBonus)}</div>
     </div>
   </div>`).join('');
-  $('view').innerHTML=`<div class="card pad"><div class="top"><div><div class="label">Kelola User & Bonus</div><h1>Ranking bonus bulan ini</h1><div class="small" style="margin-top:3px">Bonus default 1.5%. Nominal bonus tampil besar di kanan user.</div></div><button class="btn" onclick="openUser()"><i class="fa-solid fa-user-plus"></i> User</button></div><div class="grid stats" style="margin:8px 0"><div class="card stat"><span class="label">Omzet User</span><b>Rp ${rp(totalOmzet)}</b></div><div class="card stat"><span class="label">Total Bonus</span><b>Rp ${rp(totalBonus)}</b></div></div><div class="list" style="margin:10px 0 12px">${rankingHtml}</div><div id="userList" class="list">${usersHtml}</div></div>`;
+  $('view').innerHTML=`<div class="card pad"><div class="top"><div><div class="label">User & Bonus</div><h1>Ranking bonus bulan ini</h1><div class="small" style="margin-top:3px">Sumber bonus sama seperti Rocky v32: ${settingInfo}.</div></div></div><div class="grid stats" style="margin:8px 0"><div class="card stat"><span class="label">Omzet Bulan Ini</span><b>Rp ${rp(totalOmzet)}</b></div><div class="card stat"><span class="label">Bonus Transaksi</span><b>Rp ${rp(globalBonus.trxBonus)}</b></div><div class="card stat"><span class="label">Bonus Closing</span><b>Rp ${rp(globalBonus.closingBonus)}</b></div><div class="card stat"><span class="label">Total Bonus Global</span><b>Rp ${rp(globalBonus.totalBonus)}</b></div></div><div class="list" style="margin:10px 0 12px">${rankingHtml}</div><div id="userList" class="list">${usersHtml}</div></div>`;
 }
-window.openUser=(username='')=>{const u=users.find(x=>clean(x.username)===clean(username))||{}; $('modalBody').innerHTML=`<h1>${username?'Edit':'Tambah'} User</h1><div class="small" style="margin-top:4px">Isi Bonus % untuk hitungan bonus masing-masing user.</div><div class="formgrid" style="margin-top:14px"><input id="uName" placeholder="Nama" value="${safe(u.name||'')}"><input id="uUsername" placeholder="username" value="${safe(u.username||'')}"><input id="uPin" placeholder="PIN" inputmode="numeric" pattern="[0-9]*" value="${safe(u.pin||'')}"><input id="uBonus" placeholder="Bonus % contoh 1.5" inputmode="decimal" value="${safe(u.bonusPercent ?? u.bonus ?? 1.5)}"><select id="uRole"><option value="staff" ${u.role!=='admin'?'selected':''}>staff</option><option value="admin" ${u.role==='admin'?'selected':''}>admin</option></select><select id="uActive"><option value="true" ${u.active!==false?'selected':''}>Aktif</option><option value="false" ${u.active===false?'selected':''}>Nonaktif</option></select></div><div style="display:flex;gap:9px;margin-top:14px"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveUser('${username}')">Simpan</button></div>`;$('modal').classList.add('show')};
-window.saveUser=async(old='')=>{const username=clean($('uUsername').value); if(!username)return toast('Username kosong',true); const bonusPercent=Number(String($('uBonus').value||'0').replace(',','.')); if(!Number.isFinite(bonusPercent)||bonusPercent<0) return toast('Bonus % tidak valid',true); const data={username,name:$('uName').value||username,pin:String($('uPin').value||''),role:$('uRole').value,active:$('uActive').value==='true',bonusPercent,updatedAt:serverTimestamp()}; await setDoc(doc(db,'users',username),data,{merge:true}); if(old&&clean(old)!==username) await deleteDoc(doc(db,'users',clean(old))); closeModal();toast('User disimpan')};
-window.delUser=async(username)=>{if(clean(username)===clean(me.username)) return toast('Admin login tidak boleh dihapus',true); if(!confirm('Hapus permanen user ini?'))return; await deleteDoc(doc(db,'users',clean(username))); toast('User dihapus')};
-function payload(){return{version:'admin-data-app',exportedAt:new Date().toISOString(),data:{users,attendance:att,transactions:tx}}}
+window.openUser=(username='')=>{toast('Edit user dimatikan. User ikut sumber utama Rocky v32.',true)};
+window.saveUser=async()=>{toast('Edit user dimatikan',true)};
+window.delUser=async()=>{toast('Hapus user dimatikan',true)};
+function payload(){return{version:'admin-data-app-v32-bonus-sync',exportedAt:new Date().toISOString(),bonusSettings:cachedBonusSettings,data:{users,attendance:att,transactions:tx,closings}}}
 function download(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function renderBackup(){ $('view').innerHTML=`<div class="grid"><div class="card pad"><div class="label">Backup & Export</div><h1>Download data Firebase</h1><p class="small">Backup mengambil data yang sedang tersinkron di aplikasi admin ini.</p><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px"><button class="btn" onclick="backupJson()"><i class="fa-solid fa-file-code"></i> JSON</button><button class="btn green" onclick="backupExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button></div></div><div class="card pad danger-zone"><div class="label">Restore Ringan</div><h1>Import JSON Backup</h1><p class="small">Gunakan hati-hati. Data dari file akan ditambahkan/ditimpa sesuai ID user, transaksi/absen akan ditambahkan sebagai data baru.</p><input id="restoreFile" type="file" accept=".json" style="margin:10px 0"><button class="btn red" onclick="restoreJson()"><i class="fa-solid fa-upload"></i> Restore JSON</button></div></div>`}
 window.backupJson=()=>{download(`rocky-admin-backup-${Date.now()}.json`,JSON.stringify(payload(),null,2),'application/json');toast('Backup JSON diunduh')};
-window.backupExcel=()=>{const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(users),'users');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(att),'attendance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(tx),'transactions');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(users.map(u=>{const b=userBonusData(u);return{username:u.username,name:u.name,role:u.role,bonusPercent:b.percent,omzetBulanIni:b.omzet,totalTransaksi:b.count,bonusBulanIni:b.bonus}})),'bonus_user');XLSX.writeFile(wb,`rocky-admin-backup-${Date.now()}.xlsx`);toast('Backup Excel diunduh')};
+window.backupExcel=()=>{const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(users),'users');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(att),'attendance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(tx),'transactions');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(closings),'closings');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(users.map(u=>{const b=userBonusData(u);return{username:u.username,name:u.name,role:u.role,bonusPercent:b.percent,omzetBulanIni:b.omzet,totalTransaksi:b.count,bonusTransaksi:b.trxBonus,bonusClosing:b.closingBonus,bonusBulanIni:b.totalBonus}})),'bonus_user');XLSX.writeFile(wb,`rocky-admin-backup-${Date.now()}.xlsx`);toast('Backup Excel diunduh')};
 window.restoreJson=async()=>{try{const f=$('restoreFile').files[0]; if(!f) return toast('Pilih file JSON dulu',true); const b=JSON.parse(await f.text()); const d=b.data||b; for(const u of d.users||[]) if(u.username) await setDoc(doc(db,'users',clean(u.username)),{...u,username:clean(u.username)},{merge:true}); for(const a of d.attendance||[]) await addDoc(collection(db,'attendance'),{...a,user:clean(a.user),createdAt:serverTimestamp(),createdAtMs:Number(a.createdAtMs||Date.now())}); for(const t of d.transactions||[]) await addDoc(collection(db,'transactions'),{...t,user:clean(t.user),amount:Number(t.amount||0),createdAt:serverTimestamp(),createdAtMs:Number(t.createdAtMs||Date.now()),deleted:t.deleted===true}); toast('Restore JSON selesai')}catch(e){toast('Restore gagal: '+e.message,true)}};
 window.closeModal=()=>{$('modal').classList.remove('show')};$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
 restore();
