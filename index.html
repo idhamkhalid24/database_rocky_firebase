@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Rocky Data Manager Simple Dashboard</title>
+  <title>Rocky Data Manager Bonus Top Sales</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root{
@@ -476,6 +476,22 @@
       .topbar-actions .btn i{font-size:14px!important}
     }
 
+
+    /* === BONUS USER + TOP SALES MENU v9 === */
+    .mini-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+    .mini-summary{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:10px;min-width:0}
+    .mini-summary .mini-label{font-size:8.5px;color:var(--ghost);font-weight:950;text-transform:uppercase;letter-spacing:.06em;line-height:1.15}
+    .mini-summary .mini-value{font-size:17px;font-weight:950;letter-spacing:-.035em;margin-top:4px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .rank-no{width:34px;height:34px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;font-weight:950;color:var(--accent);flex:0 0 34px;font-variant-numeric:tabular-nums}
+    .rank-bar{height:8px;background:var(--surface);border:1px solid var(--border);border-radius:99px;overflow:hidden;margin-top:8px;max-width:100%}
+    .rank-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;min-width:2px}
+    .bonus-total{font-size:18px;font-weight:950;letter-spacing:-.035em;color:var(--green);font-variant-numeric:tabular-nums;white-space:nowrap}
+    .report-filter{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+    .report-filter .field label{font-size:8.5px!important}
+    .report-note{margin-top:8px;color:var(--muted);font-size:11px;line-height:1.35}
+    .fab-menu-panel{grid-template-columns:repeat(3,minmax(0,1fr))!important;max-height:500px!important}
+    @media(max-width:380px){.mini-summary-grid{gap:6px}.mini-summary{padding:9px 8px}.mini-summary .mini-value{font-size:15px}.rank-no{width:31px;height:31px;border-radius:10px;flex-basis:31px}.bonus-total{font-size:16px}.fab-menu-panel{gap:7px!important}}
+
   </style>
 </head>
 <body>
@@ -526,6 +542,7 @@
     users:[], transactions:[], attendance:[], closings:[], logs:[],
     bonus:{ transactionBonusRate:DEFAULT_TRANSACTION_BONUS_RATE, closingBonusPerMinute:DEFAULT_CLOSING_BONUS_PER_MINUTE },
     filters:{ q:'', user:'all', status:'active', start:'', end:'' },
+    bonusView:{ start:'', end:'' }, topSalesView:{ start:'', end:'' },
     unsub:[]
   };
 
@@ -608,7 +625,7 @@
   function toggleTheme(){ setTheme(getTheme()==='dark'?'light':'dark'); render(); }
 
   function currentTabLabel(){
-    const labels = { dashboard:'Dashboard', users:'User', transactions:'Transaksi', attendance:'Absensi', closings:'Closing', bonus:'Bonus', raw:'Raw JSON', backup:'Backup', logs:'Audit' };
+    const labels = { dashboard:'Dashboard', users:'User', transactions:'Transaksi', attendance:'Absensi', closings:'Closing', bonus:'Bonus', userBonus:'Bonus User', topSales:'Top Sales 2 Bulan', raw:'Raw JSON', backup:'Backup', logs:'Audit' };
     return labels[state.tab] || 'Dashboard';
   }
 
@@ -724,14 +741,14 @@
   function menuTabsHtml(){
     const tabs = [
       ['dashboard','fa-house','Home'], ['users','fa-users','User'], ['transactions','fa-receipt','Transaksi'], ['attendance','fa-fingerprint','Absensi'],
-      ['closings','fa-lock','Closing'], ['bonus','fa-coins','Bonus'], ['raw','fa-code','Raw JSON'], ['backup','fa-file-export','Backup'], ['logs','fa-clock-rotate-left','Audit']
+      ['closings','fa-lock','Closing'], ['bonus','fa-coins','Bonus'], ['userBonus','fa-hand-holding-dollar','Bonus User'], ['topSales','fa-ranking-star','Top Sales'], ['raw','fa-code','Raw JSON'], ['backup','fa-file-export','Backup'], ['logs','fa-clock-rotate-left','Audit']
     ];
     return `<div class="nav static-nav" id="app-menu">${tabs.map(t=>`<button class="tab ${state.tab===t[0]?'active':''}" onclick="setTab('${t[0]}')"><i class="fas ${t[1]}"></i><span>${t[2]}</span></button>`).join('')}</div>`;
   }
   function fabMenuHtml(){
     const tabs = [
       ['dashboard','fa-house','Home'], ['users','fa-users','User'], ['transactions','fa-receipt','Transaksi'], ['attendance','fa-fingerprint','Absensi'],
-      ['closings','fa-lock','Closing'], ['bonus','fa-coins','Bonus'], ['raw','fa-code','Raw JSON'], ['backup','fa-file-export','Backup'], ['logs','fa-clock-rotate-left','Audit']
+      ['closings','fa-lock','Closing'], ['bonus','fa-coins','Bonus'], ['userBonus','fa-hand-holding-dollar','Bonus User'], ['topSales','fa-ranking-star','Top Sales'], ['raw','fa-code','Raw JSON'], ['backup','fa-file-export','Backup'], ['logs','fa-clock-rotate-left','Audit']
     ];
     return `${state.menuOpen ? `<button class="fab-backdrop" aria-label="Tutup menu" onclick="toggleMenu()"></button>` : ''}
       <div class="fab-menu ${state.menuOpen ? 'open' : ''}">
@@ -758,6 +775,8 @@
     if(state.tab==='attendance') return pageWithBottomMenu(attendanceHtml());
     if(state.tab==='closings') return pageWithBottomMenu(closingsHtml());
     if(state.tab==='bonus') return pageWithBottomMenu(bonusHtml());
+    if(state.tab==='userBonus') return pageWithBottomMenu(userBonusHtml());
+    if(state.tab==='topSales') return pageWithBottomMenu(topSalesHtml());
     if(state.tab==='raw') return pageWithBottomMenu(rawHtml());
     if(state.tab==='backup') return pageWithBottomMenu(backupHtml());
     if(state.tab==='logs') return pageWithBottomMenu(logsHtml());
@@ -1060,6 +1079,44 @@
   function editClosing(id, fromModal=false){ if(!fromModal) return openClosingModal(id); const c=state.closings.find(x=>x.id===id); if(!c) return; $('closing-id').value=c.id; $('closing-date').value=c.dateKey||dateKey(); $('closing-time').value=c.closingTime||c.actualClosingTime||timeKey(recMs(c)||Date.now()); $('closing-scope').value=c.user?'user':'global'; $('closing-user').value=sanitizeUsername(c.user||''); $('closing-closed').checked=c.closed===true; $('closing-canceled').checked=c.canceled===true; }
   function clearClosingForm(close=true){ ['closing-id'].forEach(id=>{const el=$(id); if(el) el.value='';}); const d=$('closing-date'); if(d) d.value=dateKey(); const tm=$('closing-time'); if(tm) tm.value=timeKey(); const s=$('closing-scope'); if(s) s.value='global'; const u=$('closing-user'); if(u && activeUsers()[0]) u.value=activeUsers()[0].username; const cl=$('closing-closed'); if(cl) cl.checked=true; const ca=$('closing-canceled'); if(ca) ca.checked=false; if(close) closeFormModal(); }
 
+
+  function monthStartKey(ms=Date.now()){ return `${monthKeyFromDateKey(dateKey(ms))}-01`; }
+  function dateMonthsAgo(months=2){ const p=wibParts(); const d=new Date(`${p.y}-${p.m}-${p.d}T00:00:00+07:00`); d.setMonth(d.getMonth()-months); return dateKey(d.getTime()); }
+  function inDateRange(dk,start,end){ const key=String(dk||'').slice(0,10); if(!key) return false; if(start && key<start) return false; if(end && key>end) return false; return true; }
+  function activeTransactionsRange(start,end){ return state.transactions.filter(t=>!isDeleted(t) && inDateRange(t.dateKey || (recMs(t)?dateKey(recMs(t)):''), start, end)); }
+  function activeClosingsRange(start,end){ return state.closings.filter(c=>c.id!=='__bonus_settings' && c.type!=='bonus_settings' && c.canceled!==true && inDateRange(c.dateKey || (recMs(c)?dateKey(recMs(c)):''), start, end)); }
+  function bonusRateForUser(u){ const userRate=Number(u?.dailyBonusRate || 0) || (Number(u?.dailyBonusPercent || 0)/100); if(String(u?.role||'').toLowerCase()==='harian' && userRate>0) return userRate; return Number(state.bonus.transactionBonusRate || DEFAULT_TRANSACTION_BONUS_RATE); }
+  function pctLabel(rate){ const pct=Number(rate||0)*100; return `${pct.toLocaleString('id-ID',{maximumFractionDigits:2})}%`; }
+  function userBonusRows(start,end){
+    const map=new Map();
+    const ensure=(username)=>{ const key=sanitizeUsername(username); if(!key) return null; if(!map.has(key)){ const u=userByUsername(key) || {username:key,name:key,role:'staff'}; map.set(key,{username:key,name:u.name||key,role:u.role||'staff',rate:bonusRateForUser(u),sales:0,txCount:0,closingBonus:0,closingCount:0,totalBonus:0,trxBonus:0}); } return map.get(key); };
+    activeUsers().forEach(u=>ensure(u.username));
+    activeTransactionsRange(start,end).forEach(t=>{ const row=ensure(t.user); if(!row) return; row.sales += Number(t.amount||0)||0; row.txCount += 1; });
+    activeClosingsRange(start,end).forEach(c=>{ const row=ensure(c.user); if(!row) return; const val=Number(c.totalBonus ?? c.bonusPerUser ?? c.bonus ?? 0)||0; row.closingBonus += val; row.closingCount += 1; });
+    return [...map.values()].map(r=>({...r,trxBonus:Math.round(r.sales*r.rate),totalBonus:Math.round((r.sales*r.rate)+r.closingBonus)})).sort((a,b)=>b.totalBonus-a.totalBonus || b.sales-a.sales || a.name.localeCompare(b.name));
+  }
+  function topSalesRows(start,end){
+    const map=new Map();
+    const ensure=(username)=>{ const key=sanitizeUsername(username); if(!key) return null; if(!map.has(key)){ const u=userByUsername(key) || {username:key,name:key,role:'staff'}; map.set(key,{username:key,name:u.name||key,role:u.role||'staff',sales:0,txCount:0,lastMs:0}); } return map.get(key); };
+    activeTransactionsRange(start,end).forEach(t=>{ const row=ensure(t.user); if(!row) return; row.sales += Number(t.amount||0)||0; row.txCount += 1; row.lastMs=Math.max(row.lastMs, recMs(t)||0); });
+    return [...map.values()].filter(r=>r.txCount>0).sort((a,b)=>b.sales-a.sales || b.txCount-a.txCount);
+  }
+  function goUserTransactions(user,start,end){ state.filters={q:'',user:sanitizeUsername(user)||'all',status:'active',start:start||'',end:end||''}; state.tab='transactions'; state.menuOpen=false; render(); setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),30); }
+  function setBonusView(k,v){ state.bonusView[k]=v; renderContentOnly(); }
+  function setTopSalesView(k,v){ state.topSalesView[k]=v; renderContentOnly(); }
+  function reportFilterHtml(type,start,end){ const setter=type==='bonus'?'setBonusView':'setTopSalesView'; return `<div class="report-filter"><div class="field"><label>Dari</label><input class="input" type="date" value="${escapeHtml(start)}" onchange="${setter}('start',this.value)"></div><div class="field"><label>Sampai</label><input class="input" type="date" value="${escapeHtml(end)}" onchange="${setter}('end',this.value)"></div></div>`; }
+  function userBonusHtml(){
+    const start=state.bonusView.start || monthStartKey(); const end=state.bonusView.end || dateKey(); const rows=userBonusRows(start,end);
+    const totalSales=rows.reduce((a,b)=>a+b.sales,0), totalTrx=rows.reduce((a,b)=>a+b.txCount,0), totalClosing=rows.reduce((a,b)=>a+b.closingBonus,0), totalBonus=rows.reduce((a,b)=>a+b.totalBonus,0);
+    return `<div class="card card-pad"><div class="spaced"><div><div class="metric-label">Bonus User</div><div class="title">Bonus per user</div><div class="meta">Periode ${escapeHtml(start)} s/d ${escapeHtml(end)}</div></div><span class="pill blue">${rows.length} user</span></div>${reportFilterHtml('bonus',start,end)}<div class="mini-summary-grid"><div class="mini-summary"><div class="mini-label">Omzet</div><div class="mini-value">Rp ${formatRupiah(totalSales)}</div></div><div class="mini-summary"><div class="mini-label">Transaksi</div><div class="mini-value">${formatRupiah(totalTrx)}</div></div><div class="mini-summary"><div class="mini-label">Bonus Closing</div><div class="mini-value">Rp ${formatRupiah(totalClosing)}</div></div><div class="mini-summary"><div class="mini-label">Total Bonus</div><div class="mini-value">Rp ${formatRupiah(totalBonus)}</div></div></div><div class="report-note">Bonus transaksi dihitung dari omzet × rate bonus. User role harian memakai rate bonus harian user kalau ada, selain itu memakai bonus transaksi global.</div></div><div class="list">${rows.length?rows.map((r,i)=>bonusUserItemHtml(r,i,start,end)).join(''):empty('Belum ada data bonus')}</div>`;
+  }
+  function bonusUserItemHtml(r,i,start,end){ return `<div class="item"><div class="rank-no">${i+1}</div><div class="item-main"><div class="row"><span class="title">${escapeHtml(r.name)}</span><span class="pill blue">@${escapeHtml(r.username)}</span><span class="pill ${r.role==='harian'?'amber':'green'}">${escapeHtml(r.role)}</span></div><div class="meta">Omzet: Rp ${formatRupiah(r.sales)} · ${r.txCount} transaksi · Rate: ${escapeHtml(pctLabel(r.rate))}<br>Bonus transaksi: Rp ${formatRupiah(r.trxBonus)} · Closing: Rp ${formatRupiah(r.closingBonus)} (${r.closingCount}x)</div></div><div style="text-align:right"><div class="bonus-total">Rp ${formatRupiah(r.totalBonus)}</div><button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="goUserTransactions(${jsArg(r.username)},${jsArg(start)},${jsArg(end)})"><i class="fas fa-receipt"></i></button></div></div>`; }
+  function topSalesHtml(){
+    const start=state.topSalesView.start || dateMonthsAgo(2); const end=state.topSalesView.end || dateKey(); const rows=topSalesRows(start,end); const top=rows[0]?.sales || 0; const totalSales=rows.reduce((a,b)=>a+b.sales,0); const totalTrx=rows.reduce((a,b)=>a+b.txCount,0);
+    return `<div class="card card-pad"><div class="spaced"><div><div class="metric-label">Top Sales 2 Bulan</div><div class="title">Penjualan tertinggi</div><div class="meta">Periode ${escapeHtml(start)} s/d ${escapeHtml(end)}</div></div><span class="pill ${rows.length?'green':'amber'}">${rows.length} user</span></div>${reportFilterHtml('top',start,end)}<div class="mini-summary-grid"><div class="mini-summary"><div class="mini-label">Total Omzet</div><div class="mini-value">Rp ${formatRupiah(totalSales)}</div></div><div class="mini-summary"><div class="mini-label">Total Transaksi</div><div class="mini-value">${formatRupiah(totalTrx)}</div></div></div><div class="report-note">Default menampilkan 2 bulan terakhir dari hari ini. Klik ikon struk untuk buka transaksi user tersebut.</div></div><div class="list">${rows.length?rows.map((r,i)=>topSalesItemHtml(r,i,top,start,end)).join(''):empty('Belum ada transaksi pada periode ini')}</div>`;
+  }
+  function topSalesItemHtml(r,i,top,start,end){ const pct=top?Math.max(2,Math.min(100,(r.sales/top)*100)):0; return `<div class="item"><div class="rank-no">${i+1}</div><div class="item-main"><div class="row"><span class="title">${escapeHtml(r.name)}</span><span class="pill blue">@${escapeHtml(r.username)}</span><span class="pill green">Rp ${formatRupiah(r.sales)}</span></div><div class="meta">${r.txCount} transaksi · Rata-rata Rp ${formatRupiah(r.txCount?Math.round(r.sales/r.txCount):0)} · Terakhir ${escapeHtml(fmtDateTime(r.lastMs))}</div><div class="rank-bar"><div class="rank-fill" style="width:${pct}%"></div></div></div><button class="btn btn-ghost btn-sm" onclick="goUserTransactions(${jsArg(r.username)},${jsArg(start)},${jsArg(end)})"><i class="fas fa-receipt"></i></button></div>`; }
+
   function bonusHtml(){ const trxPercent=Number(state.bonus.transactionBonusRate||0)*100; const closing=Number(state.bonus.closingBonusPerMinute||0); return `<div class="card card-pad"><div class="metric-label">Bonus Settings</div><div class="title">Atur Bonus Global</div><div class="grid grid-2" style="margin-top:14px"><div class="field"><label>Bonus transaksi (%)</label><input id="bonus-trx" class="input" type="number" step="0.01" value="${trxPercent}"></div><div class="field"><label>Bonus closing per menit (Rp)</label><input id="bonus-closing" class="input" type="number" step="1" value="${closing}"></div></div><div class="row" style="margin-top:14px"><button class="btn btn-primary" onclick="saveBonus()"><i class="fas fa-floppy-disk"></i> Simpan Bonus</button><span class="pill blue">Update: ${escapeHtml(fmtDateTime(Number(state.bonus.updatedAtMs||0)))}</span></div></div>`; }
   async function saveBonus(){ const pct=Number($('bonus-trx').value||0); const closing=Number($('bonus-closing').value||0); if(pct<0 || pct>100 || closing<0) return toast('Nilai bonus tidak valid',true); setLoading(true); try{ await setDoc(doc(db,'closings','__bonus_settings'),{type:'bonus_settings',transactionBonusRate:pct/100,closingBonusPerMinute:closing,updatedAt:serverTimestamp(),updatedAtMs:Date.now(),updatedBy:state.currentUser.username,updatedByName:state.currentUser.name},{merge:true}); await logAudit('bonus_settings_update_data_manager',{transactionBonusPercent:pct,closingBonusPerMinute:closing}); toast('Bonus disimpan'); }catch(e){ toast(e.message||'Gagal simpan bonus',true); } setLoading(false); }
 
@@ -1084,7 +1141,7 @@
   async function restoreRecord(col,id){ setLoading(true); try{ await setDoc(doc(db,col,id),{deleted:false,deletedAt:null,deletedAtMs:null,deletedBy:null,deletedByName:null,restoredAt:serverTimestamp(),restoredAtMs:Date.now(),restoredBy:state.currentUser.username},{merge:true}); await logAudit(`${col}_restore_data_manager`,{id}); toast('Data dipulihkan'); }catch(e){ toast(e.message||'Gagal restore data',true); } setLoading(false); }
   async function hardDeleteRecord(col,id){ const pin=prompt(`HAPUS PERMANEN ${col}/${id}?\nMasukkan PIN admin:`); if(!pin || pin!==String(state.currentUser.pin)) return toast('PIN salah / batal',true); if(!confirm('Data akan hilang permanen. Lanjut?')) return; setLoading(true); try{ await deleteDoc(doc(db,col,id)); await logAudit(`${col}_hard_delete_data_manager`,{id}); toast('Data dihapus permanen'); }catch(e){ toast(e.message||'Gagal hapus permanen',true); } setLoading(false); }
 
-  window.login=login; window.logout=logout; window.setTab=setTab; window.goDashboardData=goDashboardData; window.toggleMenu=toggleMenu; window.toggleTheme=toggleTheme; window.setSearch=setSearch; window.setFilter=setFilter; window.resetFilters=resetFilters;
+  window.login=login; window.logout=logout; window.setTab=setTab; window.goDashboardData=goDashboardData; window.toggleMenu=toggleMenu; window.toggleTheme=toggleTheme; window.setSearch=setSearch; window.setFilter=setFilter; window.resetFilters=resetFilters; window.setBonusView=setBonusView; window.setTopSalesView=setTopSalesView; window.goUserTransactions=goUserTransactions;
   window.openFormModal=openFormModal; window.closeFormModal=closeFormModal;
   window.saveUser=saveUser; window.openUserModal=openUserModal; window.editUser=editUser; window.clearUserForm=clearUserForm; window.softDeleteUser=softDeleteUser; window.restoreUser=restoreUser; window.hardDeleteUser=hardDeleteUser;
   window.saveTransaction=saveTransaction; window.openTransactionModal=openTransactionModal; window.editTransaction=editTransaction; window.clearTxForm=clearTxForm;
