@@ -492,6 +492,43 @@
     .fab-menu-panel{grid-template-columns:repeat(3,minmax(0,1fr))!important;max-height:500px!important}
     @media(max-width:380px){.mini-summary-grid{gap:6px}.mini-summary{padding:9px 8px}.mini-summary .mini-value{font-size:15px}.rank-no{width:31px;height:31px;border-radius:10px;flex-basis:31px}.bonus-total{font-size:16px}.fab-menu-panel{gap:7px!important}}
 
+  
+    /* === DASHBOARD CENTER + COMPACT LIGHT v10 === */
+    body[data-page="dashboard"] .dashboard-only4{margin-top:0!important}
+    body[data-page="dashboard"] .dashboard-only4 *,body[data-page="dashboard"] .dashboard-only4 *::before,body[data-page="dashboard"] .dashboard-only4 *::after{transition:none!important;animation:none!important;box-shadow:none!important}
+    body[data-page="dashboard"] .dashboard-hero{text-align:center!important;padding:12px 12px!important;border-radius:15px!important;margin-bottom:8px!important;background:var(--bg2)!important;border-color:var(--border)!important}
+    body[data-page="dashboard"] .dashboard-hero::before{display:none!important;content:none!important}
+    body[data-page="dashboard"] .dash-hero-top{flex-direction:column!important;justify-content:center!important;align-items:center!important;gap:6px!important;text-align:center!important}
+    body[data-page="dashboard"] .dash-hero-top>div{width:100%!important;text-align:center!important}
+    body[data-page="dashboard"] .dash-eyebrow{font-size:8px!important;line-height:1!important;margin:0!important}
+    body[data-page="dashboard"] .dash-title{font-size:16px!important;line-height:1.05!important;margin-top:3px!important;text-align:center!important}
+    body[data-page="dashboard"] .dash-date{font-size:9.5px!important;margin-top:3px!important;text-align:center!important}
+    body[data-page="dashboard"] .dash-hero-value{font-size:24px!important;line-height:1.05!important;margin-top:8px!important;text-align:center!important}
+    body[data-page="dashboard"] .dash-hero-label{font-size:10px!important;line-height:1.25!important;margin-top:4px!important;text-align:center!important}
+    body[data-page="dashboard"] .dashboard-hero .pill{margin:0 auto!important;height:24px!important;padding:0 9px!important;font-size:9px!important;border-radius:999px!important}
+    body[data-page="dashboard"] .dash-only-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-top:0!important}
+    body[data-page="dashboard"] .dash-only-grid .card{min-height:74px!important;border-radius:14px!important;background:var(--bg2)!important;border-color:var(--border)!important}
+    body[data-page="dashboard"] .dash-only-grid .card-pad{padding:10px 8px!important}
+    body[data-page="dashboard"] .dash-only-grid .spaced{height:100%!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;text-align:center!important}
+    body[data-page="dashboard"] .dash-only-grid .spaced>div{width:100%!important;min-width:0!important;text-align:center!important}
+    body[data-page="dashboard"] .dash-only-grid i{display:none!important}
+    body[data-page="dashboard"] .dash-only-grid .metric-label{min-height:0!important;height:auto!important;font-size:8.7px!important;line-height:1.15!important;letter-spacing:.04em!important;text-align:center!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;margin:0 auto!important;max-width:100%!important}
+    body[data-page="dashboard"] .dash-only-grid .metric-value{font-size:19px!important;line-height:1.08!important;letter-spacing:-.04em!important;margin:4px auto 0!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important}
+    body[data-page="dashboard"] .rev-card{margin-top:8px!important;margin-bottom:72px!important;padding:11px 10px!important;border-radius:15px!important;background:var(--bg2)!important;border-color:var(--border)!important;text-align:center!important}
+    body[data-page="dashboard"] .rev-head{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;margin-bottom:6px!important;text-align:center!important}
+    body[data-page="dashboard"] .rev-head>div{width:100%!important;text-align:center!important}
+    body[data-page="dashboard"] .rev-card .metric-label,body[data-page="dashboard"] .rev-card .meta{text-align:center!important}
+    body[data-page="dashboard"] .rev-total{font-size:17px!important;line-height:1.1!important;text-align:center!important;margin-top:3px!important}
+    body[data-page="dashboard"] .rev-card .pill{height:24px!important;padding:0 9px!important;font-size:9px!important}
+    body[data-page="dashboard"] .rev-chart{height:118px!important;gap:4px!important;margin-top:7px!important}
+    body[data-page="dashboard"] .rev-col{height:118px!important;gap:3px!important}
+    body[data-page="dashboard"] .rev-val{height:12px!important;font-size:7px!important;max-width:37px!important}
+    body[data-page="dashboard"] .rev-track{height:76px!important;max-width:24px!important;border-radius:8px!important}
+    body[data-page="dashboard"] .rev-bar{border-radius:8px 8px 0 0!important;background:var(--accent)!important}
+    body[data-page="dashboard"] .rev-label{font-size:7.7px!important;line-height:1!important}
+    body[data-page="dashboard"] .rev-date{font-size:7px!important;line-height:1!important;margin-top:-2px!important}
+    @media(max-width:380px){body[data-page="dashboard"] .dashboard-hero{padding:11px 10px!important;border-radius:14px!important}body[data-page="dashboard"] .dash-title{font-size:15px!important}body[data-page="dashboard"] .dash-hero-value{font-size:22px!important}body[data-page="dashboard"] .dash-only-grid{gap:7px!important}body[data-page="dashboard"] .dash-only-grid .card{min-height:70px!important}body[data-page="dashboard"] .dash-only-grid .card-pad{padding:9px 7px!important}body[data-page="dashboard"] .dash-only-grid .metric-label{font-size:8.2px!important}body[data-page="dashboard"] .dash-only-grid .metric-value{font-size:17px!important}body[data-page="dashboard"] .rev-chart{gap:3px!important}body[data-page="dashboard"] .rev-track{max-width:22px!important}body[data-page="dashboard"] .rev-val{font-size:6.7px!important;max-width:32px!important}}
+
   </style>
 </head>
 <body>
