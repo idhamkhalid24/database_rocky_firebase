@@ -409,6 +409,73 @@
     .tap-hint{font-size:9.5px;font-weight:850;color:var(--accent);margin-top:4px;display:flex;gap:4px;align-items:center}
     @media(max-width:380px){.topbar{padding-left:10px!important;padding-right:10px!important;margin-left:-10px!important;margin-right:-10px!important}.brand-copy h1{max-width:126px!important;font-size:14px!important}.topbar-user{max-width:126px!important;font-size:8.7px!important}.topbar-actions .btn{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;border-radius:10px!important}.dash-only-grid .card{min-height:82px!important}.dash-only-grid .metric-value{font-size:18.5px!important}}
 
+
+    /* === FIX FINAL: HEADER SEJAJAR ANDROID + HILANGKAN TEKS BUKA DATA === */
+    .topbar{
+      display:flex!important;
+      flex-direction:row!important;
+      flex-wrap:nowrap!important;
+      align-items:center!important;
+      justify-content:space-between!important;
+      min-height:50px!important;
+      gap:8px!important;
+      padding:calc(7px + var(--safe-top)) 12px 8px!important;
+    }
+    .topbar-brand{
+      flex:1 1 auto!important;
+      min-width:0!important;
+      display:flex!important;
+      align-items:center!important;
+      overflow:hidden!important;
+    }
+    .brand-copy{
+      min-width:0!important;
+      overflow:hidden!important;
+    }
+    .brand-copy h1,
+    .topbar-user{
+      white-space:nowrap!important;
+      overflow:hidden!important;
+      text-overflow:ellipsis!important;
+    }
+    .topbar-actions{
+      display:flex!important;
+      flex-direction:row!important;
+      flex-wrap:nowrap!important;
+      align-items:center!important;
+      justify-content:flex-end!important;
+      gap:6px!important;
+      width:auto!important;
+      flex:0 0 auto!important;
+      margin-left:auto!important;
+    }
+    .topbar-actions .btn{
+      display:inline-flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+      width:36px!important;
+      height:36px!important;
+      min-width:36px!important;
+      min-height:36px!important;
+      padding:0!important;
+      border-radius:12px!important;
+      flex:0 0 36px!important;
+      font-size:0!important;
+      line-height:1!important;
+    }
+    .topbar-actions .btn i{font-size:15px!important;margin:0!important;line-height:1!important}
+    body[data-page="dashboard"] .topbar-actions .home-top-btn{display:none!important}
+    .tap-hint{display:none!important}
+    @media(max-width:380px){
+      .topbar{gap:6px!important;padding-left:10px!important;padding-right:10px!important}
+      .brand-mark{width:32px!important;height:32px!important;min-width:32px!important;border-radius:10px!important}
+      .brand-copy h1{max-width:116px!important;font-size:13.5px!important}
+      .topbar-user{max-width:116px!important;font-size:8.5px!important}
+      .topbar-actions{gap:5px!important}
+      .topbar-actions .btn{width:33px!important;height:33px!important;min-width:33px!important;min-height:33px!important;flex-basis:33px!important;border-radius:10px!important}
+      .topbar-actions .btn i{font-size:14px!important}
+    }
+
   </style>
 </head>
 <body>
@@ -718,7 +785,7 @@
           <span class="pill ${state.ready?'green':'amber'}"><i class="fas ${state.ready?'fa-wifi':'fa-spinner'}"></i> ${state.ready?'Online':'Sync'}</span>
         </div>
         <div class="dash-hero-value">Rp ${formatRupiah(todayRevenue)}</div>
-        <div class="dash-hero-label">Omzet hari ini · ${txToday.length} transaksi · ${attToday.length} absen</div><div class="tap-hint"><i class="fas fa-arrow-pointer"></i> Ketuk untuk lihat transaksi hari ini</div>
+        <div class="dash-hero-label">Omzet hari ini · ${txToday.length} transaksi · ${attToday.length} absen</div>
       </div>
       <div class="grid grid-4 dash-metric-grid dash-only-grid">
         ${metric('Absen Hari Ini', attToday.length, 'fa-fingerprint', "goDashboardData('attendance','today')")}
@@ -790,7 +857,7 @@
       </div>
     </div>`;
   }
-  function metric(label, value, icon, onclick=''){ const cls = onclick ? ' clickable-card' : ''; const attr = onclick ? ` onclick="${onclick}" role="button" tabindex="0"` : ''; return `<div class="card card-pad${cls}"${attr}><div class="spaced"><div><div class="metric-label">${label}</div><div class="metric-value">${value}</div></div><i class="fas ${icon}" style="color:var(--accent);opacity:.9"></i></div>${onclick?`<div class="tap-hint"><i class="fas fa-arrow-pointer"></i> Buka data</div>`:''}</div>`; }
+  function metric(label, value, icon, onclick=''){ const cls = onclick ? ' clickable-card' : ''; const attr = onclick ? ` onclick="${onclick}" role="button" tabindex="0"` : ''; return `<div class="card card-pad${cls}"${attr}><div class="spaced"><div><div class="metric-label">${label}</div><div class="metric-value">${value}</div></div><i class="fas ${icon}" style="color:var(--accent);opacity:.9"></i></div></div>`; }
 
   function usersHtml(){
     const q = state.filters.q.toLowerCase();
