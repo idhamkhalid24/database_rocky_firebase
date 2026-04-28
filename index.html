@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Rocky Data Manager Android</title>
+  <title>Rocky Data Manager Compact Home</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root{
@@ -273,6 +273,20 @@
     .static-nav .tab.active{background:var(--accent)!important;color:#fff!important;border-color:transparent!important;transform:none!important}
     @media(max-width:380px){.topbar{padding-right:7px!important}.static-nav,.nav.static-nav{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important}.static-nav .tab{font-size:8.5px!important;padding:5px 4px!important}}
 
+
+    /* === HOME + MENU TETAP DI BAWAH KONTEN v5 === */
+    .content-section{display:grid;gap:8px}
+    .bottom-sync-menu{margin-top:12px!important;padding-top:2px!important}
+    .home-top-btn{display:none!important}
+    body[data-page]:not([data-page="dashboard"]) .home-top-btn{display:inline-flex!important}
+    body[data-page]:not([data-page="dashboard"]) .topbar-actions .home-top-btn{font-size:0!important}
+    body[data-page]:not([data-page="dashboard"]) .topbar-actions .home-top-btn i{font-size:15px!important}
+    .sync-menu-block.bottom-sync-menu .metric-label::after{content:" · Menu di bawah";font-weight:800;color:var(--ghost)}
+    @media(max-width:430px){
+      .bottom-sync-menu{margin-top:10px!important;margin-bottom:4px!important}
+      .sync-menu-block.bottom-sync-menu .sync-card{padding:7px 8px!important}
+    }
+
   </style>
 </head>
 <body>
@@ -383,7 +397,7 @@
     const opts = activeUsers().map(u => `<option value="${escapeHtml(u.username)}" ${sanitizeUsername(selected)===sanitizeUsername(u.username)?'selected':''}>${escapeHtml(u.name || u.username)} (@${escapeHtml(u.username)})</option>`).join('');
     return `${includeAll ? `<option value="all" ${selected==='all'?'selected':''}>Semua User</option>` : ''}${opts}`;
   }
-  function setTab(tab){ state.tab = tab; state.menuOpen = false; render(); }
+  function setTab(tab){ state.tab = tab; state.menuOpen = false; render(); setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}), 30); }
   function toggleMenu(){ state.menuOpen = !state.menuOpen; render(); }
   function toggleTheme(){ setTheme(getTheme()==='dark'?'light':'dark'); render(); }
 
@@ -443,7 +457,8 @@
   }
 
   function render(){
-    if(!state.currentUser) return renderLogin();
+    if(!state.currentUser){ document.body.removeAttribute('data-page'); return renderLogin(); }
+    document.body.setAttribute('data-page', state.tab);
     appEl.innerHTML = `
       <div class="wrap">
         <div class="topbar">
@@ -452,6 +467,7 @@
             <div class="sub">CRUD Firebase terpisah · ${escapeHtml(state.currentUser.name)} (@${escapeHtml(state.currentUser.username)})</div>
           </div>
           <div class="row topbar-actions">
+            <button class="btn btn-primary btn-sm home-top-btn" onclick="setTab('dashboard')" title="Home"><i class="fas fa-house"></i> Home</button>
             <button class="btn btn-ghost btn-sm" onclick="toggleTheme()"><i class="fas fa-circle-half-stroke"></i> ${getTheme()==='dark'?'Gelap':'Terang'}</button>
             <button class="btn btn-danger btn-sm" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
           </div>
@@ -459,7 +475,7 @@
         <div id="content">${contentHtml()}</div>
       </div>`;
   }
-  function renderContentOnly(){ const c = $('content'); if(c && state.currentUser) c.innerHTML = contentHtml(); }
+  function renderContentOnly(){ const c = $('content'); if(c && state.currentUser){ document.body.setAttribute('data-page', state.tab); c.innerHTML = contentHtml(); } }
 
   function openFormModal(title, subtitle, bodyHtml){
     const m = $('form-modal');
@@ -477,6 +493,7 @@
   }
 
   function renderLogin(){
+    document.body.removeAttribute('data-page');
     appEl.innerHTML = `<div class="login-wrap"><div class="login-card">
       <div class="spaced"><div class="logo">🧕</div><button class="btn btn-ghost btn-sm" onclick="toggleTheme()"><i class="fas fa-circle-half-stroke"></i></button></div>
       <h1>Rocky Data Manager</h1><div class="sub" style="margin-bottom:18px">Masuk pakai akun admin dari aplikasi utama.</div>
@@ -490,26 +507,29 @@
   }
   function menuTabsHtml(){
     const tabs = [
-      ['dashboard','fa-chart-pie','Dashboard'], ['users','fa-users','User'], ['transactions','fa-receipt','Transaksi'], ['attendance','fa-fingerprint','Absensi'],
+      ['dashboard','fa-house','Home'], ['users','fa-users','User'], ['transactions','fa-receipt','Transaksi'], ['attendance','fa-fingerprint','Absensi'],
       ['closings','fa-lock','Closing'], ['bonus','fa-coins','Bonus'], ['raw','fa-code','Raw JSON'], ['backup','fa-file-export','Backup'], ['logs','fa-clock-rotate-left','Audit']
     ];
     return `<div class="nav static-nav" id="app-menu">${tabs.map(t=>`<button class="tab ${state.tab===t[0]?'active':''}" onclick="setTab('${t[0]}')"><i class="fas ${t[1]}"></i><span>${t[2]}</span></button>`).join('')}</div>`;
   }
-  function syncMenuHtml(){
-    return `<div class="sync-menu-block">
+  function syncMenuHtml(extraClass=''){
+    return `<div class="sync-menu-block ${extraClass}">
       <div class="card card-pad sync-card"><div class="spaced"><div><div class="metric-label">Status Sync</div><div class="title">${state.ready?'Realtime aktif':'Memuat data...'}</div><div class="meta">Project: rocky-fd14b · Data otomatis update.</div></div><span class="pill ${state.ready?'green':'amber'}">${state.ready?'online':'loading'}</span></div></div>
       ${menuTabsHtml()}
     </div>`;
   }
+  function pageWithBottomMenu(html){
+    return `<div class="content-section">${html}</div>${syncMenuHtml('bottom-sync-menu')}`;
+  }
   function contentHtml(){
-    if(state.tab==='users') return syncMenuHtml() + usersHtml();
-    if(state.tab==='transactions') return syncMenuHtml() + transactionsHtml();
-    if(state.tab==='attendance') return syncMenuHtml() + attendanceHtml();
-    if(state.tab==='closings') return syncMenuHtml() + closingsHtml();
-    if(state.tab==='bonus') return syncMenuHtml() + bonusHtml();
-    if(state.tab==='raw') return syncMenuHtml() + rawHtml();
-    if(state.tab==='backup') return syncMenuHtml() + backupHtml();
-    if(state.tab==='logs') return syncMenuHtml() + logsHtml();
+    if(state.tab==='users') return pageWithBottomMenu(usersHtml());
+    if(state.tab==='transactions') return pageWithBottomMenu(transactionsHtml());
+    if(state.tab==='attendance') return pageWithBottomMenu(attendanceHtml());
+    if(state.tab==='closings') return pageWithBottomMenu(closingsHtml());
+    if(state.tab==='bonus') return pageWithBottomMenu(bonusHtml());
+    if(state.tab==='raw') return pageWithBottomMenu(rawHtml());
+    if(state.tab==='backup') return pageWithBottomMenu(backupHtml());
+    if(state.tab==='logs') return pageWithBottomMenu(logsHtml());
     return dashboardHtml();
   }
 
@@ -533,7 +553,7 @@
       ${metric('Audit Log', state.logs.length, 'fa-clock-rotate-left')}
     </div>
     ${revenueChartHtml(activeTx)}
-    ${syncMenuHtml()}`;
+    ${syncMenuHtml('bottom-sync-menu')}`;
   }
 
   function last7RevenueData(activeTx){
