@@ -384,6 +384,31 @@
     .dashboard-only4 .rev-card{margin-top:12px!important;margin-bottom:78px!important}
     .dashboard-only4 .dash-hero-label{font-size:12px!important;line-height:1.35!important}
 
+
+    /* === HEADER COMPACT SEJAJAR + DASHBOARD CLICKABLE v8 === */
+    .topbar{min-height:54px!important;padding:calc(7px + var(--safe-top)) 12px 8px!important;margin:0 -12px 10px!important;border-radius:0 0 14px 14px!important;gap:8px!important;align-items:center!important}
+    .topbar-brand{gap:8px!important;align-items:center!important;min-height:40px!important}
+    .brand-mark{width:34px!important;height:34px!important;border-radius:11px!important;box-shadow:none!important}
+    .brand-mark i{font-size:14px!important}
+    .brand-copy{gap:0!important;justify-content:center!important;min-width:0!important}
+    .page-kicker{font-size:8px!important;line-height:1!important;margin-bottom:1px!important}
+    .brand-copy h1{font-size:15px!important;line-height:1.05!important;max-width:145px!important;margin:0!important}
+    .topbar-user{font-size:9px!important;line-height:1.1!important;max-width:145px!important;margin-top:1px!important}
+    .topbar-user i{display:none!important}
+    .topbar-actions{gap:5px!important;align-items:center!important}
+    .topbar-actions .btn{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;border-radius:11px!important}
+    .topbar-actions .btn i{font-size:14px!important}
+    .dashboard-hero.clickable-card,.dash-only-grid .clickable-card{cursor:pointer;position:relative;overflow:hidden;transition:transform .12s ease,border-color .12s ease,background .12s ease!important}
+    .dashboard-hero.clickable-card:active,.dash-only-grid .clickable-card:active{transform:scale(.985)}
+    .dashboard-hero.clickable-card:after,.dash-only-grid .clickable-card:after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(120deg,transparent,rgba(91,143,255,.08));opacity:0;pointer-events:none;transition:opacity .12s ease}
+    .dashboard-hero.clickable-card:hover:after,.dash-only-grid .clickable-card:hover:after{opacity:1}
+    .dash-only-grid .card{min-height:88px!important}
+    .dash-only-grid .card-pad{padding:13px 12px!important}
+    .dash-only-grid .metric-label{min-height:auto!important;font-size:9px!important}
+    .dash-only-grid .metric-value{font-size:21px!important}
+    .tap-hint{font-size:9.5px;font-weight:850;color:var(--accent);margin-top:4px;display:flex;gap:4px;align-items:center}
+    @media(max-width:380px){.topbar{padding-left:10px!important;padding-right:10px!important;margin-left:-10px!important;margin-right:-10px!important}.brand-copy h1{max-width:126px!important;font-size:14px!important}.topbar-user{max-width:126px!important;font-size:8.7px!important}.topbar-actions .btn{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;border-radius:10px!important}.dash-only-grid .card{min-height:82px!important}.dash-only-grid .metric-value{font-size:18.5px!important}}
+
   </style>
 </head>
 <body>
@@ -495,6 +520,23 @@
     return `${includeAll ? `<option value="all" ${selected==='all'?'selected':''}>Semua User</option>` : ''}${opts}`;
   }
   function setTab(tab){ state.tab = tab; state.menuOpen = false; render(); setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}), 30); }
+  function goDashboardData(tab, range){
+    const today = dateKey();
+    const month = monthKeyFromDateKey(today);
+    const firstDay = `${month}-01`;
+    state.filters = { q:'', user:'all', status:'active', start:'', end:'' };
+    if(range === 'today'){
+      state.filters.start = today;
+      state.filters.end = today;
+    }else if(range === 'month'){
+      state.filters.start = firstDay;
+      state.filters.end = today;
+    }
+    state.tab = tab;
+    state.menuOpen = false;
+    render();
+    setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}), 30);
+  }
   function toggleMenu(){ state.menuOpen = !state.menuOpen; render(); }
   function toggleTheme(){ setTheme(getTheme()==='dark'?'light':'dark'); render(); }
 
@@ -666,7 +708,7 @@
     const monthRevenue = txMonth.reduce((a,b)=>a+Number(b.amount||0),0);
     const dateLabel = new Intl.DateTimeFormat('id-ID', { timeZone:'Asia/Jakarta', weekday:'long', day:'2-digit', month:'short', year:'numeric' }).format(new Date());
     return `<div class="dashboard-only4">
-      <div class="dashboard-hero card">
+      <div class="dashboard-hero card clickable-card" onclick="goDashboardData('transactions','today')" role="button" tabindex="0">
         <div class="dash-hero-top">
           <div>
             <div class="dash-eyebrow">Dashboard</div>
@@ -676,13 +718,13 @@
           <span class="pill ${state.ready?'green':'amber'}"><i class="fas ${state.ready?'fa-wifi':'fa-spinner'}"></i> ${state.ready?'Online':'Sync'}</span>
         </div>
         <div class="dash-hero-value">Rp ${formatRupiah(todayRevenue)}</div>
-        <div class="dash-hero-label">Omzet hari ini · ${txToday.length} transaksi · ${attToday.length} absen</div>
+        <div class="dash-hero-label">Omzet hari ini · ${txToday.length} transaksi · ${attToday.length} absen</div><div class="tap-hint"><i class="fas fa-arrow-pointer"></i> Ketuk untuk lihat transaksi hari ini</div>
       </div>
       <div class="grid grid-4 dash-metric-grid dash-only-grid">
-        ${metric('Absen Hari Ini', attToday.length, 'fa-fingerprint')}
-        ${metric('Total Transaksi Hari Ini', txToday.length, 'fa-receipt')}
-        ${metric('Omzet Bulan Ini', `Rp ${formatRupiah(monthRevenue)}`, 'fa-calendar')}
-        ${metric('Total Transaksi Bulan Ini', txMonth.length, 'fa-chart-line')}
+        ${metric('Absen Hari Ini', attToday.length, 'fa-fingerprint', "goDashboardData('attendance','today')")}
+        ${metric('Total Transaksi Hari Ini', txToday.length, 'fa-receipt', "goDashboardData('transactions','today')")}
+        ${metric('Omzet Bulan Ini', `Rp ${formatRupiah(monthRevenue)}`, 'fa-calendar', "goDashboardData('transactions','month')")}
+        ${metric('Total Transaksi Bulan Ini', txMonth.length, 'fa-chart-line', "goDashboardData('transactions','month')")}
       </div>
       ${revenueChartHtml(activeTx)}
     </div>`;
@@ -748,7 +790,7 @@
       </div>
     </div>`;
   }
-  function metric(label, value, icon){ return `<div class="card card-pad"><div class="spaced"><div><div class="metric-label">${label}</div><div class="metric-value">${value}</div></div><i class="fas ${icon}" style="color:var(--accent);opacity:.9"></i></div></div>`; }
+  function metric(label, value, icon, onclick=''){ const cls = onclick ? ' clickable-card' : ''; const attr = onclick ? ` onclick="${onclick}" role="button" tabindex="0"` : ''; return `<div class="card card-pad${cls}"${attr}><div class="spaced"><div><div class="metric-label">${label}</div><div class="metric-value">${value}</div></div><i class="fas ${icon}" style="color:var(--accent);opacity:.9"></i></div>${onclick?`<div class="tap-hint"><i class="fas fa-arrow-pointer"></i> Buka data</div>`:''}</div>`; }
 
   function usersHtml(){
     const q = state.filters.q.toLowerCase();
@@ -975,7 +1017,7 @@
   async function restoreRecord(col,id){ setLoading(true); try{ await setDoc(doc(db,col,id),{deleted:false,deletedAt:null,deletedAtMs:null,deletedBy:null,deletedByName:null,restoredAt:serverTimestamp(),restoredAtMs:Date.now(),restoredBy:state.currentUser.username},{merge:true}); await logAudit(`${col}_restore_data_manager`,{id}); toast('Data dipulihkan'); }catch(e){ toast(e.message||'Gagal restore data',true); } setLoading(false); }
   async function hardDeleteRecord(col,id){ const pin=prompt(`HAPUS PERMANEN ${col}/${id}?\nMasukkan PIN admin:`); if(!pin || pin!==String(state.currentUser.pin)) return toast('PIN salah / batal',true); if(!confirm('Data akan hilang permanen. Lanjut?')) return; setLoading(true); try{ await deleteDoc(doc(db,col,id)); await logAudit(`${col}_hard_delete_data_manager`,{id}); toast('Data dihapus permanen'); }catch(e){ toast(e.message||'Gagal hapus permanen',true); } setLoading(false); }
 
-  window.login=login; window.logout=logout; window.setTab=setTab; window.toggleMenu=toggleMenu; window.toggleTheme=toggleTheme; window.setSearch=setSearch; window.setFilter=setFilter; window.resetFilters=resetFilters;
+  window.login=login; window.logout=logout; window.setTab=setTab; window.goDashboardData=goDashboardData; window.toggleMenu=toggleMenu; window.toggleTheme=toggleTheme; window.setSearch=setSearch; window.setFilter=setFilter; window.resetFilters=resetFilters;
   window.openFormModal=openFormModal; window.closeFormModal=closeFormModal;
   window.saveUser=saveUser; window.openUserModal=openUserModal; window.editUser=editUser; window.clearUserForm=clearUserForm; window.softDeleteUser=softDeleteUser; window.restoreUser=restoreUser; window.hardDeleteUser=hardDeleteUser;
   window.saveTransaction=saveTransaction; window.openTransactionModal=openTransactionModal; window.editTransaction=editTransaction; window.clearTxForm=clearTxForm;
