@@ -317,6 +317,58 @@
     body.modal-open .fab-menu,body.modal-open .fab-backdrop{display:none!important}
     @media(max-width:380px){.wrap{padding-left:10px!important;padding-right:10px!important}.topbar{margin-left:-10px!important;margin-right:-10px!important;padding-left:10px!important;padding-right:10px!important}.sub{max-width:190px!important}.metric-value{font-size:18px!important}.fab-menu-panel{width:calc(100vw - 20px);grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.fab-menu-item{height:51px;font-size:9.8px}.fab-main{width:66px;height:66px;border-radius:22px}.rev-chart{gap:4px!important}.rev-track{max-width:30px!important}}
 
+
+    /* === RAPIN DASHBOARD ATAS + APPBAR v7 === */
+    .topbar{
+      display:flex!important;align-items:center!important;justify-content:space-between!important;
+      gap:10px!important;margin:0 -12px 12px!important;padding:calc(10px + var(--safe-top)) 12px 11px!important;
+      border-radius:0 0 18px 18px!important;border-bottom:1px solid var(--border)!important;
+      background:linear-gradient(180deg,var(--bg) 0%,rgba(10,13,20,.96) 100%)!important;
+      min-height:70px!important;box-shadow:0 10px 26px rgba(0,0,0,.13)!important;
+    }
+    [data-theme="light"] .topbar{background:linear-gradient(180deg,var(--bg) 0%,rgba(242,245,251,.97) 100%)!important}
+    .topbar-brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+    .brand-mark{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 10px 26px rgba(91,143,255,.22)}
+    .brand-mark i{font-size:17px}
+    .brand-copy{min-width:0;display:flex;flex-direction:column;gap:1px}
+    .page-kicker{font-size:9px;font-weight:950;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);line-height:1}
+    .brand-copy h1{font-size:18px!important;line-height:1.06!important;margin:0!important;letter-spacing:-.035em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+    .topbar-user{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:10.5px!important;line-height:1.2;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .topbar-user i{font-size:10px;color:var(--ghost);flex:0 0 auto}
+    .topbar-actions{display:flex!important;align-items:center!important;gap:7px!important;flex:0 0 auto!important}
+    .topbar-actions .btn{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;padding:0!important;border-radius:14px!important;font-size:0!important;box-shadow:none!important}
+    .topbar-actions .btn i{font-size:16px!important;margin:0!important}
+    body[data-page="dashboard"] .home-top-btn{display:none!important}
+
+    .dashboard-hero{padding:16px!important;border-radius:20px!important;overflow:hidden;position:relative;background:linear-gradient(145deg,var(--bg3),var(--bg2))!important}
+    .dashboard-hero:before{content:"";position:absolute;right:-55px;top:-55px;width:150px;height:150px;background:radial-gradient(circle,rgba(91,143,255,.24),transparent 68%);pointer-events:none}
+    .dash-hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;position:relative;z-index:1}
+    .dash-eyebrow{font-size:9px;font-weight:950;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);line-height:1}
+    .dash-title{font-size:18px;font-weight:950;letter-spacing:-.04em;margin-top:4px;line-height:1.08}
+    .dash-date{font-size:10.8px;color:var(--muted);margin-top:3px;line-height:1.25}
+    .dash-hero-value{position:relative;z-index:1;font-size:29px;font-weight:950;letter-spacing:-.055em;line-height:1.05;margin-top:15px;font-variant-numeric:tabular-nums;word-break:break-word}
+    .dash-hero-label{position:relative;z-index:1;color:var(--muted);font-size:11px;font-weight:800;margin-top:3px}
+    .dash-chip-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+    .dash-chip{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:10px 8px;min-width:0}
+    .dash-chip-label{font-size:8.5px;color:var(--ghost);font-weight:950;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dash-chip-value{font-size:13px;font-weight:950;margin-top:4px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+    .dash-metric-grid{margin-top:10px!important}
+    .dash-metric-grid .card-pad{padding:12px!important;border-radius:15px!important}
+    .dash-metric-grid .metric-value{font-size:18px!important;line-height:1.12!important}
+    .dash-metric-grid .metric-label{font-size:8.4px!important;line-height:1.1!important}
+    .dash-metric-grid .spaced{align-items:flex-start!important}
+    .dash-metric-grid i{font-size:15px!important;margin-top:2px}
+    .rev-card{border-radius:20px!important;padding:15px!important}
+    .rev-head{align-items:center!important}
+
+    @media(max-width:380px){
+      .topbar{margin-left:-10px!important;margin-right:-10px!important;padding-left:10px!important;padding-right:10px!important}
+      .brand-mark{width:39px;height:39px;border-radius:13px}.brand-copy h1{font-size:17px!important;max-width:160px}.topbar-user{max-width:155px;font-size:10px!important}
+      .topbar-actions .btn{width:39px!important;height:39px!important;min-width:39px!important;min-height:39px!important;border-radius:13px!important}
+      .dashboard-hero{padding:14px!important}.dash-title{font-size:17px}.dash-hero-value{font-size:25px}.dash-chip-grid{gap:6px}.dash-chip{padding:9px 7px}.dash-chip-value{font-size:12px}
+      .dash-metric-grid .metric-value{font-size:16.5px!important}
+    }
+
   </style>
 </head>
 <body>
@@ -431,6 +483,11 @@
   function toggleMenu(){ state.menuOpen = !state.menuOpen; render(); }
   function toggleTheme(){ setTheme(getTheme()==='dark'?'light':'dark'); render(); }
 
+  function currentTabLabel(){
+    const labels = { dashboard:'Dashboard', users:'User', transactions:'Transaksi', attendance:'Absensi', closings:'Closing', bonus:'Bonus', raw:'Raw JSON', backup:'Backup', logs:'Audit' };
+    return labels[state.tab] || 'Dashboard';
+  }
+
   async function logAudit(action, detail={}){
     try{
       await addDoc(collection(db,'audit_logs'), { action, detail, actor:state.currentUser?.username || 'data-manager', actorName:state.currentUser?.name || 'Data Manager', createdAt:serverTimestamp(), createdAtMs:Date.now() });
@@ -492,14 +549,18 @@
     appEl.innerHTML = `
       <div class="wrap">
         <div class="topbar">
-          <div>
-            <h1>Rocky Data Manager</h1>
-            <div class="sub">CRUD Firebase terpisah · ${escapeHtml(state.currentUser.name)} (@${escapeHtml(state.currentUser.username)})</div>
+          <div class="topbar-brand">
+            <div class="brand-mark"><i class="fas fa-database"></i></div>
+            <div class="brand-copy">
+              <div class="page-kicker">${currentTabLabel()}</div>
+              <h1>Rocky Manager</h1>
+              <div class="topbar-user"><i class="fas fa-user-shield"></i><span>${escapeHtml(state.currentUser.name)} · @${escapeHtml(state.currentUser.username)}</span></div>
+            </div>
           </div>
           <div class="row topbar-actions">
-            <button class="btn btn-primary btn-sm home-top-btn" onclick="setTab('dashboard')" title="Home"><i class="fas fa-house"></i> Home</button>
-            <button class="btn btn-ghost btn-sm" onclick="toggleTheme()"><i class="fas fa-circle-half-stroke"></i> ${getTheme()==='dark'?'Gelap':'Terang'}</button>
-            <button class="btn btn-danger btn-sm" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button>
+            <button class="btn btn-primary btn-sm home-top-btn" onclick="setTab('dashboard')" title="Home" aria-label="Home"><i class="fas fa-house"></i> Home</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Ganti tema" aria-label="Ganti tema"><i class="fas fa-circle-half-stroke"></i> ${getTheme()==='dark'?'Gelap':'Terang'}</button>
+            <button class="btn btn-danger btn-sm" onclick="logout()" title="Logout" aria-label="Logout"><i class="fas fa-right-from-bracket"></i> Logout</button>
           </div>
         </div>
         <div id="content">${contentHtml()}</div>
@@ -588,18 +649,40 @@
     const attToday = state.attendance.filter(a => !isDeleted(a) && String(a.dateKey || '').slice(0,10) === today);
     const closedToday = state.closings.filter(c => c.id !== '__bonus_settings' && c.type !== 'bonus_settings' && c.closed === true && String(c.dateKey || '').slice(0,10) === today);
     const deletedTx = state.transactions.filter(isDeleted);
-    return `<div class="grid grid-4">
-      ${metric('Omzet Hari Ini', `Rp ${formatRupiah(txToday.reduce((a,b)=>a+Number(b.amount||0),0))}`, 'fa-arrow-trend-up')}
-      ${metric('Omzet Bulan Ini', `Rp ${formatRupiah(txMonth.reduce((a,b)=>a+Number(b.amount||0),0))}`, 'fa-calendar')}
-      ${metric('User Aktif', activeUsers().length, 'fa-users')}
+    const todayRevenue = txToday.reduce((a,b)=>a+Number(b.amount||0),0);
+    const monthRevenue = txMonth.reduce((a,b)=>a+Number(b.amount||0),0);
+    return `${dashboardHeroHtml(todayRevenue, monthRevenue, activeUsers().length, txToday.length)}
+    <div class="grid grid-4 dash-metric-grid">
+      ${metric('Omzet Bulan Ini', `Rp ${formatRupiah(monthRevenue)}`, 'fa-calendar')}
       ${metric('Absen Hari Ini', attToday.length, 'fa-fingerprint')}
       ${metric('Total Transaksi', activeTx.length, 'fa-receipt')}
-      ${metric('Data Terhapus', deletedTx.length, 'fa-trash')}
       ${metric('Closing Hari Ini', closedToday.length, 'fa-lock')}
+      ${metric('Data Terhapus', deletedTx.length, 'fa-trash')}
       ${metric('Audit Log', state.logs.length, 'fa-clock-rotate-left')}
     </div>
     ${revenueChartHtml(activeTx)}
     ${syncMenuHtml('bottom-sync-menu')}`;
+  }
+
+  function dashboardHeroHtml(todayRevenue, monthRevenue, activeUserCount, txTodayCount){
+    const dateLabel = new Intl.DateTimeFormat('id-ID', { timeZone:'Asia/Jakarta', weekday:'long', day:'2-digit', month:'short', year:'numeric' }).format(new Date());
+    return `<div class="dashboard-hero card">
+      <div class="dash-hero-top">
+        <div>
+          <div class="dash-eyebrow">Dashboard</div>
+          <div class="dash-title">Ringkasan Hari Ini</div>
+          <div class="dash-date">${escapeHtml(dateLabel)}</div>
+        </div>
+        <span class="pill ${state.ready?'green':'amber'}"><i class="fas ${state.ready?'fa-wifi':'fa-spinner'}"></i> ${state.ready?'Online':'Sync'}</span>
+      </div>
+      <div class="dash-hero-value">Rp ${formatRupiah(todayRevenue)}</div>
+      <div class="dash-hero-label">Omzet hari ini</div>
+      <div class="dash-chip-grid">
+        <div class="dash-chip"><div class="dash-chip-label">Bulan ini</div><div class="dash-chip-value">Rp ${miniMoney(monthRevenue)}</div></div>
+        <div class="dash-chip"><div class="dash-chip-label">User aktif</div><div class="dash-chip-value">${activeUserCount}</div></div>
+        <div class="dash-chip"><div class="dash-chip-label">Transaksi</div><div class="dash-chip-value">${txTodayCount} hari ini</div></div>
+      </div>
+    </div>`;
   }
 
   function last7RevenueData(activeTx){
