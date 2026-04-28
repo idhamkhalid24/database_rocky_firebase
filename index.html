@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Rocky Data Manager Grafik 1 Bulan</title>
+  <title>Rocky Data Manager Top 3 Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root{
@@ -611,6 +611,46 @@
       body[data-page="dashboard"] .rev-val{font-size:7px!important;max-width:34px!important}
     }
 
+
+    /* === DASHBOARD TOP 3 SALES === */
+    body[data-page="dashboard"] .dash-top3-card{
+      margin-top:12px!important;
+      padding:14px!important;
+      border-radius:18px!important;
+      background:var(--bg2)!important;
+      border-color:var(--border)!important;
+      box-shadow:none!important;
+    }
+    body[data-page="dashboard"] .dash-top3-head{
+      display:flex!important;
+      align-items:center!important;
+      justify-content:space-between!important;
+      gap:10px!important;
+      margin-bottom:10px!important;
+    }
+    body[data-page="dashboard"] .dash-top3-head .btn{height:32px!important;padding:0 11px!important;font-size:11px!important;white-space:nowrap!important}
+    body[data-page="dashboard"] .dash-top3-list{display:flex!important;flex-direction:column!important;gap:8px!important}
+    body[data-page="dashboard"] .dash-top3-item{
+      display:flex!important;
+      align-items:center!important;
+      gap:10px!important;
+      padding:10px!important;
+      border:1px solid var(--border)!important;
+      background:var(--surface)!important;
+      border-radius:14px!important;
+      cursor:pointer!important;
+      min-width:0!important;
+    }
+    body[data-page="dashboard"] .dash-top3-item:active{transform:scale(.99)!important}
+    body[data-page="dashboard"] .dash-top3-main{flex:1!important;min-width:0!important}
+    body[data-page="dashboard"] .dash-top3-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;min-width:0!important}
+    body[data-page="dashboard"] .dash-top3-name{font-size:13px!important;font-weight:900!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-width:0!important;color:var(--text)!important}
+    body[data-page="dashboard"] .dash-top3-sales{font-size:12px!important;font-weight:950!important;color:var(--green)!important;white-space:nowrap!important;font-variant-numeric:tabular-nums!important}
+    body[data-page="dashboard"] .dash-top3-meta{font-size:10.5px!important;color:var(--text-soft)!important;margin-top:2px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+    body[data-page="dashboard"] .dash-top3-card .rank-bar{height:6px!important;margin-top:7px!important;background:var(--bg3)!important}
+    body[data-page="dashboard"] .dash-top3-card .rank-no{width:32px!important;height:32px!important;border-radius:11px!important;flex:0 0 32px!important;background:var(--accent-dim)!important;color:var(--accent)!important}
+    @media(max-width:380px){body[data-page="dashboard"] .dash-top3-card{padding:12px!important;border-radius:16px!important}body[data-page="dashboard"] .dash-top3-head{gap:8px!important}body[data-page="dashboard"] .dash-top3-head .btn{height:30px!important;padding:0 9px!important;font-size:10px!important}body[data-page="dashboard"] .dash-top3-item{padding:9px!important;gap:8px!important}body[data-page="dashboard"] .dash-top3-name{font-size:12px!important}body[data-page="dashboard"] .dash-top3-sales{font-size:11px!important}}
+
   </style>
 </head>
 <body>
@@ -931,7 +971,38 @@
         ${metric('Omzet Bulan Ini', `Rp ${formatRupiah(monthRevenue)}`, 'fa-calendar', "goDashboardData('transactions','month')")}
         ${metric('Total Transaksi Bulan Ini', txMonth.length, 'fa-chart-line', "goDashboardData('transactions','month')")}
       </div>
+      ${dashboardTop3SalesHtml()}
       ${revenueChartHtml(activeTx)}
+    </div>`;
+  }
+
+  function dashboardTop3SalesHtml(){
+    const start = dateMonthsAgo(1);
+    const end = dateKey();
+    const rows = topSalesRows(start, end).slice(0, 3);
+    const top = rows[0]?.sales || 0;
+    return `<div class="card card-pad dash-top3-card">
+      <div class="dash-top3-head">
+        <div>
+          <div class="metric-label">Top 3 Penjualan Tertinggi</div>
+          <div class="meta">Periode 1 bulan terakhir</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="setTab('topSales')"><i class="fas fa-ranking-star"></i> Detail</button>
+      </div>
+      <div class="dash-top3-list">
+        ${rows.length ? rows.map((r,i)=>dashboardTop3ItemHtml(r,i,top,start,end)).join('') : empty('Belum ada transaksi 1 bulan terakhir')}
+      </div>
+    </div>`;
+  }
+  function dashboardTop3ItemHtml(r,i,top,start,end){
+    const pct = top ? Math.max(5, Math.min(100, (r.sales/top)*100)) : 0;
+    return `<div class="dash-top3-item" onclick="goUserTransactions(${jsArg(r.username)},${jsArg(start)},${jsArg(end)})" role="button" tabindex="0">
+      <div class="rank-no">${i+1}</div>
+      <div class="dash-top3-main">
+        <div class="dash-top3-row"><span class="dash-top3-name">${escapeHtml(r.name)}</span><span class="dash-top3-sales">Rp ${formatRupiah(r.sales)}</span></div>
+        <div class="dash-top3-meta">${r.txCount} transaksi · @${escapeHtml(r.username)}</div>
+        <div class="rank-bar"><div class="rank-fill" style="width:${pct}%"></div></div>
+      </div>
     </div>`;
   }
   function dashboardHeroHtml(todayRevenue, monthRevenue, activeUserCount, txTodayCount){
