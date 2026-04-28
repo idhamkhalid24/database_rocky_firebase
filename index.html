@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Rocky Data Manager Top 3 Piagam</title>
+  <title>Rocky Data Manager Top 3 Podium</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root{
@@ -633,7 +633,7 @@
       display:grid!important;
       grid-template-columns:repeat(3,minmax(0,1fr))!important;
       gap:8px!important;
-      align-items:stretch!important;
+      align-items:end!important;
     }
     body[data-page="dashboard"] .dash-top3-item{
       position:relative!important;
@@ -654,9 +654,9 @@
       box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important;
     }
     body[data-page="dashboard"] .dash-top3-item:active{transform:scale(.985)!important}
-    body[data-page="dashboard"] .dash-top3-item.rank-1{background:linear-gradient(180deg,rgba(255,196,107,.22),rgba(255,196,107,.08))!important;border-color:rgba(255,196,107,.34)!important}
-    body[data-page="dashboard"] .dash-top3-item.rank-2{background:linear-gradient(180deg,rgba(170,183,204,.20),rgba(170,183,204,.08))!important;border-color:rgba(170,183,204,.30)!important}
-    body[data-page="dashboard"] .dash-top3-item.rank-3{background:linear-gradient(180deg,rgba(214,148,94,.22),rgba(214,148,94,.08))!important;border-color:rgba(214,148,94,.30)!important}
+    body[data-page="dashboard"] .dash-top3-item.rank-1{background:linear-gradient(180deg,rgba(255,196,107,.22),rgba(255,196,107,.08))!important;border-color:rgba(255,196,107,.34)!important;min-height:156px!important}
+    body[data-page="dashboard"] .dash-top3-item.rank-2{background:linear-gradient(180deg,rgba(170,183,204,.20),rgba(170,183,204,.08))!important;border-color:rgba(170,183,204,.30)!important;min-height:140px!important}
+    body[data-page="dashboard"] .dash-top3-item.rank-3{background:linear-gradient(180deg,rgba(214,148,94,.22),rgba(214,148,94,.08))!important;border-color:rgba(214,148,94,.30)!important;min-height:132px!important}
     body[data-page="dashboard"] .dash-top3-badge{font-size:22px!important;line-height:1!important;margin-bottom:1px!important}
     body[data-page="dashboard"] .dash-top3-rank{
       display:inline-flex!important;
@@ -712,7 +712,7 @@
       body[data-page="dashboard"] .dash-top3-head{gap:8px!important}
       body[data-page="dashboard"] .dash-top3-head .btn{height:30px!important;padding:0 9px!important;font-size:10px!important}
       body[data-page="dashboard"] .dash-top3-list{gap:6px!important}
-      body[data-page="dashboard"] .dash-top3-item{min-height:128px!important;padding:10px 6px!important;border-radius:14px!important}
+      body[data-page="dashboard"] .dash-top3-item{min-height:122px!important;padding:10px 6px!important;border-radius:14px!important}body[data-page="dashboard"] .dash-top3-item.rank-1{min-height:146px!important}body[data-page="dashboard"] .dash-top3-item.rank-2{min-height:132px!important}body[data-page="dashboard"] .dash-top3-item.rank-3{min-height:126px!important}
       body[data-page="dashboard"] .dash-top3-badge{font-size:20px!important}
       body[data-page="dashboard"] .dash-top3-rank{height:20px!important;min-width:42px!important;font-size:9px!important;padding:0 6px!important}
       body[data-page="dashboard"] .dash-top3-name{font-size:11px!important}
@@ -1049,7 +1049,10 @@
     const start = dateMonthsAgo(1);
     const end = dateKey();
     const rows = topSalesRows(start, end).slice(0, 3);
-    const top = rows[0]?.sales || 0;
+    const podium = [];
+    if(rows[1]) podium.push({ row: rows[1], rank: 2 });
+    if(rows[0]) podium.push({ row: rows[0], rank: 1 });
+    if(rows[2]) podium.push({ row: rows[2], rank: 3 });
     return `<div class="card card-pad dash-top3-card">
       <div class="dash-top3-head">
         <div>
@@ -1059,15 +1062,14 @@
         <button class="btn btn-ghost btn-sm" onclick="setTab('topSales')"><i class="fas fa-ranking-star"></i> Detail</button>
       </div>
       <div class="dash-top3-list">
-        ${rows.length ? rows.map((r,i)=>dashboardTop3ItemHtml(r,i,top,start,end)).join('') : empty('Belum ada transaksi 1 bulan terakhir')}
+        ${podium.length ? podium.map(item=>dashboardTop3ItemHtml(item.row,item.rank,start,end)).join('') : empty('Belum ada transaksi 1 bulan terakhir')}
       </div>
     </div>`;
   }
-  function dashboardTop3ItemHtml(r,i,top,start,end){
-    const rank = i + 1;
-    const medals = ['🥇','🥈','🥉'];
+  function dashboardTop3ItemHtml(r,rank,start,end){
+    const medals = { 1:'🥇', 2:'🥈', 3:'🥉' };
     return `<div class="dash-top3-item rank-${rank}" onclick="goUserTransactions(${jsArg(r.username)},${jsArg(start)},${jsArg(end)})" role="button" tabindex="0">
-      <div class="dash-top3-badge">${medals[i] || '#' + rank}</div>
+      <div class="dash-top3-badge">${medals[rank] || '#' + rank}</div>
       <div class="dash-top3-rank">No ${rank}</div>
       <div class="dash-top3-name">${escapeHtml(r.name)}</div>
       <div class="dash-top3-sales">Rp ${formatRupiah(r.sales)}</div>
