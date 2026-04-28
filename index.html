@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Rocky Data Manager Top 3 Podium</title>
+  <title>Rocky Data Manager Podium Bonus Fixed</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root{
       --bg:#0a0d14; --bg2:#0f1420; --bg3:#151d2f; --surface:rgba(255,255,255,.055); --surface2:rgba(255,255,255,.08);
-      --border:rgba(255,255,255,.09); --text:#eef2ff; --muted:#8893aa; --ghost:#4d5870; --accent:#5b8fff;
+      --border:rgba(255,255,255,.09); --text:#eef2ff; --muted:#8893aa; --ghaost:#4d5870; --accent:#5b8fff;
       --accent2:#7aa5ff; --green:#52d89e; --red:#ff6b6b; --amber:#ffc46b; --shadow:0 18px 60px rgba(0,0,0,.35);
     }
     [data-theme="light"]{
@@ -720,6 +720,36 @@
       body[data-page="dashboard"] .dash-top3-meta,body[data-page="dashboard"] .dash-top3-user{font-size:9px!important}
     }
 
+
+    /* === FIX TOP 3 PODIUM + BONUS COMPACT === */
+    body[data-page="dashboard"] .dash-top3-card{padding:12px!important;margin-top:10px!important;border-radius:16px!important}
+    body[data-page="dashboard"] .dash-top3-head{margin-bottom:8px!important}
+    body[data-page="dashboard"] .dash-top3-list{gap:6px!important;align-items:end!important}
+    body[data-page="dashboard"] .dash-top3-item{padding:9px 6px!important;gap:3px!important;min-height:116px!important;border-radius:14px!important}
+    body[data-page="dashboard"] .dash-top3-item.rank-1{min-height:138px!important}
+    body[data-page="dashboard"] .dash-top3-item.rank-2{min-height:126px!important}
+    body[data-page="dashboard"] .dash-top3-item.rank-3{min-height:120px!important}
+    body[data-page="dashboard"] .dash-top3-badge{font-size:18px!important;margin-bottom:0!important}
+    body[data-page="dashboard"] .dash-top3-rank{height:19px!important;min-width:40px!important;font-size:8.8px!important;padding:0 6px!important}
+    body[data-page="dashboard"] .dash-top3-name{font-size:10.8px!important;margin-top:1px!important}
+    body[data-page="dashboard"] .dash-top3-sales{font-size:10.5px!important}
+    body[data-page="dashboard"] .dash-top3-bonus{font-size:9px!important;font-weight:900!important;color:var(--accent)!important;line-height:1.1!important;width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+    body[data-page="dashboard"] .dash-top3-meta,body[data-page="dashboard"] .dash-top3-user{font-size:8.8px!important;line-height:1.1!important}
+    @media(max-width:380px){
+      body[data-page="dashboard"] .dash-top3-card{padding:10px!important}
+      body[data-page="dashboard"] .dash-top3-list{gap:5px!important}
+      body[data-page="dashboard"] .dash-top3-item{min-height:108px!important;padding:8px 5px!important}
+      body[data-page="dashboard"] .dash-top3-item.rank-1{min-height:126px!important}
+      body[data-page="dashboard"] .dash-top3-item.rank-2{min-height:116px!important}
+      body[data-page="dashboard"] .dash-top3-item.rank-3{min-height:112px!important}
+      body[data-page="dashboard"] .dash-top3-badge{font-size:16px!important}
+      body[data-page="dashboard"] .dash-top3-rank{height:17px!important;min-width:36px!important;font-size:8px!important;padding:0 5px!important}
+      body[data-page="dashboard"] .dash-top3-name{font-size:9.6px!important}
+      body[data-page="dashboard"] .dash-top3-sales{font-size:9.2px!important}
+      body[data-page="dashboard"] .dash-top3-bonus{font-size:7.8px!important}
+      body[data-page="dashboard"] .dash-top3-meta,body[data-page="dashboard"] .dash-top3-user{font-size:7.8px!important}
+    }
+
   </style>
 </head>
 <body>
@@ -1066,13 +1096,22 @@
       </div>
     </div>`;
   }
+  function dashboardBonusForUser(username,start,end){
+    try{
+      const key = sanitizeUsername(username);
+      const row = userBonusRows(start,end).find(x => sanitizeUsername(x.username) === key);
+      return Number(row?.totalBonus || 0);
+    }catch(e){ console.warn('Bonus dashboard gagal dihitung:', e); return 0; }
+  }
   function dashboardTop3ItemHtml(r,rank,start,end){
     const medals = { 1:'🥇', 2:'🥈', 3:'🥉' };
+    const bonus = dashboardBonusForUser(r.username,start,end);
     return `<div class="dash-top3-item rank-${rank}" onclick="goUserTransactions(${jsArg(r.username)},${jsArg(start)},${jsArg(end)})" role="button" tabindex="0">
       <div class="dash-top3-badge">${medals[rank] || '#' + rank}</div>
       <div class="dash-top3-rank">No ${rank}</div>
       <div class="dash-top3-name">${escapeHtml(r.name)}</div>
       <div class="dash-top3-sales">Rp ${formatRupiah(r.sales)}</div>
+      <div class="dash-top3-bonus">Bonus Rp ${formatRupiah(bonus)}</div>
       <div class="dash-top3-meta">${r.txCount} transaksi</div>
       <div class="dash-top3-user">@${escapeHtml(r.username)}</div>
     </div>`;
